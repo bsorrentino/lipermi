@@ -87,30 +87,28 @@ public class Server {
             serverSocket.bind(null);
         }
 
-        Thread bindThread = new Thread(new Runnable() {
-            public void run() {
-                while (enabled) {
-                    Socket acceptSocket = null;
-                    try {
-                        acceptSocket = serverSocket.accept();
+        Thread bindThread = new Thread(() -> {
+            while (enabled) {
+                Socket acceptSocket = null;
+                try {
+                    acceptSocket = serverSocket.accept();
 
-                        final Socket clientSocket = acceptSocket;
-                        ConnectionHandler.createConnectionHandler(clientSocket,
-                                callHandler,
-                                filter,
-                                new IConnectionHandlerListener() {
+                    final Socket clientSocket = acceptSocket;
+                    ConnectionHandler.createConnectionHandler(clientSocket,
+                            callHandler,
+                            filter,
+                            new IConnectionHandlerListener() {
 
-                            public void connectionClosed() {
-                                for (IServerListener listener : listeners)
-                                    listener.clientDisconnected(clientSocket);
-                            }
+                        public void connectionClosed() {
+                            for (IServerListener listener : listeners)
+                                listener.clientDisconnected(clientSocket);
+                        }
 
-                        });
-                        for (IServerListener listener : listeners)
-                            listener.clientConnected(clientSocket);
-                    } catch (IOException e) {
-                        e.printStackTrace();
-                    }
+                    });
+                    for (IServerListener listener : listeners)
+                        listener.clientConnected(clientSocket);
+                } catch (IOException e) {
+                    e.printStackTrace();
                 }
             }
         }, String.format("Bind (%d)", port)); //$NON-NLS-1$ //$NON-NLS-2$

@@ -32,6 +32,7 @@ package net.sf.lipermi.handler;
  * @see       net.sf.lipermi.handler.ConnectionHandler
  */
 
+@FunctionalInterface
 public interface IConnectionHandlerListener {
 
     void connectionClosed();

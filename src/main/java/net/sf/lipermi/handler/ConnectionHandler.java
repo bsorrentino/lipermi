@@ -129,23 +129,21 @@ public class ConnectionHandler implements Runnable {
                         }
                     }
 
-                    Thread delegator = new Thread(new Runnable() {
-                        public void run() {
-                            CallLookup.handlingMe(ConnectionHandler.this);
+                    Thread delegator = new Thread(() -> {
+                        CallLookup.handlingMe(ConnectionHandler.this);
 
-                            RemoteReturn remoteReturn;
-                            try {
+                        RemoteReturn remoteReturn;
+                        try {
 //                                System.out.println("remoteCall: " + remoteCall.getCallId() + " - " + remoteCall.getRemoteInstance().getInstanceId());
 //                                System.out.println("(" + remoteCall.getCallId() + ") " + remoteCall.getArgs()[0]);
-                                remoteReturn = callHandler.delegateCall(remoteCall);
+                            remoteReturn = callHandler.delegateCall(remoteCall);
 //                                System.out.println("(" + remoteCall.getCallId() + ") " + remoteReturn.getRet());
-                                sendMessage(remoteReturn);
-                            } catch (Exception e) {
-                                e.printStackTrace();
-                            }
-
-                            CallLookup.forgetMe();
+                            sendMessage(remoteReturn);
+                        } catch (Exception e) {
+                            e.printStackTrace();
                         }
+
+                        CallLookup.forgetMe();
                     }, "Delegator"); //$NON-NLS-1$
                     delegator.setDaemon(true);
                     delegator.start();

@@ -54,14 +54,12 @@ public class Client {
 
     private ConnectionHandler connectionHandler;
 
-    private final IConnectionHandlerListener connectionHandlerListener = new IConnectionHandlerListener() {
-        public void connectionClosed() {
+    private List<IClientListener> listeners = new LinkedList<IClientListener>();
+
+    private final IConnectionHandlerListener connectionHandlerListener = () -> {
             for (IClientListener listener : listeners)
                 listener.disconnected();
-        }
     };
-
-    private List<IClientListener> listeners = new LinkedList<IClientListener>();
 
     public void addClientListener(IClientListener listener) {
         listeners.add(listener);
@@ -84,8 +82,8 @@ public class Client {
         socket.close();
     }
 
-    public Object getGlobal(Class<?> clazz) {
-        return Proxy.newProxyInstance(clazz.getClassLoader(), new Class[] { clazz }, new CallProxy(connectionHandler));
+    public <T> T getGlobal(Class<T> clazz) {
+        return (T)Proxy.newProxyInstance(clazz.getClassLoader(), new Class[] { clazz }, new CallProxy(connectionHandler));
     }
 }
 
