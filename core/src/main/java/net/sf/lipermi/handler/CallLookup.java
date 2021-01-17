@@ -22,10 +22,16 @@
 
 package net.sf.lipermi.handler;
 
+import net.sf.lipermi.TCPFullDuplexStream;
+
 import java.net.Socket;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Optional;
+
+import static java.util.Collections.synchronizedMap;
+import static java.util.Optional.ofNullable;
 
 /**
  * A common static way to access the Socket
@@ -39,7 +45,7 @@ import java.util.Map;
  */
 public class CallLookup {
 
-    private static Map<Thread, ConnectionHandler> connectionMap = Collections.synchronizedMap(new HashMap<Thread, ConnectionHandler>());
+    private static Map<Thread, ConnectionHandler> connectionMap = synchronizedMap(new HashMap<>());
 
     /**
      * Get the current Socket for this call.
@@ -47,9 +53,9 @@ public class CallLookup {
      *
      * @return Socket which started the Delegator Thread
      */
-    public static Socket getCurrentSocket() {
-        ConnectionHandler handler = connectionMap.get(Thread.currentThread());
-        return (handler == null ? null : handler.getSocket());
+    public static Optional<TCPFullDuplexStream> getCurrentTCPStream() {
+        final ConnectionHandler handler = connectionMap.get(Thread.currentThread());
+        return ofNullable(handler).flatMap( (h) -> ofNullable(handler.getTCPStream()) );
     }
 
     static void handlingMe(ConnectionHandler connectionHandler) {

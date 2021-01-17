@@ -26,19 +26,20 @@ import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.lang.reflect.Method;
-import java.net.Socket;
 import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicLong;
 
+import net.sf.lipermi.TCPFullDuplexStream;
 import net.sf.lipermi.call.IRemoteMessage;
 import net.sf.lipermi.call.RemoteCall;
 import net.sf.lipermi.call.RemoteInstance;
 import net.sf.lipermi.call.RemoteReturn;
 import net.sf.lipermi.exception.LipeRMIException;
 import net.sf.lipermi.handler.filter.IProtocolFilter;
+import net.sf.lipermi.net.BaseClient;
 
 
 /**
@@ -52,13 +53,13 @@ import net.sf.lipermi.handler.filter.IProtocolFilter;
  * @see       net.sf.lipermi.call.RemoteInstance
  * @see       net.sf.lipermi.call.RemoteCall
  * @see       net.sf.lipermi.call.RemoteReturn
- * @see       net.sf.lipermi.net.Client
+ * @see       BaseClient
  * @see       net.sf.lipermi.net.Server
  * @see       net.sf.lipermi.handler.filter.DefaultFilter
  */
 public class ConnectionHandler implements Runnable {
 
-    public static ConnectionHandler createConnectionHandler(Socket socket, CallHandler callHandler, IProtocolFilter filter) {
+    public static ConnectionHandler of(TCPFullDuplexStream socket, CallHandler callHandler, IProtocolFilter filter) {
         ConnectionHandler connectionHandler = new ConnectionHandler(socket, callHandler, filter);
 
         String threadName = String.format("ConnectionHandler (%s:%d)", socket.getInetAddress().getHostAddress(), socket.getPort()); //$NON-NLS-1$
@@ -69,15 +70,15 @@ public class ConnectionHandler implements Runnable {
         return connectionHandler;
     }
 
-    public static ConnectionHandler createConnectionHandler(Socket socket, CallHandler callHandler, IProtocolFilter filter, IConnectionHandlerListener listener) {
-        ConnectionHandler connectionHandler = createConnectionHandler(socket, callHandler, filter);
+    public static ConnectionHandler of(TCPFullDuplexStream socket, CallHandler callHandler, IProtocolFilter filter, IConnectionHandlerListener listener) {
+        ConnectionHandler connectionHandler = of(socket, callHandler, filter);
         connectionHandler.addConnectionHandlerListener(listener);
         return connectionHandler;
     }
 
-    private CallHandler callHandler;
+    private final CallHandler callHandler;
 
-    private Socket socket;
+    private TCPFullDuplexStream tcpStream;
 
     private ObjectOutputStream output;
 
@@ -99,9 +100,9 @@ public class ConnectionHandler implements Runnable {
         listeners.remove(listener);
     }
 
-    private ConnectionHandler(Socket socket, CallHandler callHandler, IProtocolFilter filter) {
+    private ConnectionHandler(TCPFullDuplexStream socket, CallHandler callHandler, IProtocolFilter filter) {
         this.callHandler = callHandler;
-        this.socket = socket;
+        this.tcpStream = socket;
         this.filter = filter;
     }
 
@@ -109,9 +110,9 @@ public class ConnectionHandler implements Runnable {
         ObjectInputStream input;
 
         try {
-            input = new ObjectInputStream(socket.getInputStream());
+            input = new ObjectInputStream(tcpStream.getInputStream());
 
-            while (socket.isConnected()) {
+            while (tcpStream.isConnected()) {
                 Object objFromStream = input.readUnshared();
 
                 IRemoteMessage remoteMessage = filter.readObject(objFromStream);
@@ -160,7 +161,7 @@ public class ConnectionHandler implements Runnable {
             }
         } catch (Exception e) {
             try {
-                socket.close();
+                tcpStream.close();
             } catch (IOException e1) {}
 
             synchronized (remoteReturns) {
@@ -174,14 +175,13 @@ public class ConnectionHandler implements Runnable {
 
     private synchronized void sendMessage(IRemoteMessage remoteMessage) throws IOException {
         if (output == null)
-            output = new ObjectOutputStream(socket.getOutputStream());
+            output = new ObjectOutputStream(tcpStream.getOutputStream());
 
         Object objToWrite = filter.prepareWrite(remoteMessage);
         output.reset();
         output.writeUnshared(objToWrite);
         output.flush();
     }
-
 
     final synchronized Object remoteInvocation(final Object proxy, final Method method, final Object[] args) throws Throwable {
         final Long id = callId.getAndIncrement();
@@ -226,9 +226,9 @@ public class ConnectionHandler implements Runnable {
                 }
             }
         }
-        while (socket.isConnected() && !bReturned);
+        while (tcpStream.isConnected() && !bReturned);
 
-        if (!socket.isConnected() && !bReturned)
+        if (!tcpStream.isConnected() && !bReturned)
             throw new LipeRMIException("Connection aborted"); //$NON-NLS-1$
 
         if (remoteReturn.isThrowing() && remoteReturn.getRet() instanceof Throwable)
@@ -269,8 +269,12 @@ public class ConnectionHandler implements Runnable {
         return null;
     }
 
-    public Socket getSocket() {
-        return socket;
+    public CallHandler getCallHandler() {
+        return callHandler;
+    }
+
+    public TCPFullDuplexStream getTCPStream() {
+        return tcpStream;
     }
 }
 

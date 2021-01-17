@@ -22,12 +22,15 @@
 
 package net.sf.lipermi.net;
 
+import java.io.Closeable;
 import java.io.IOException;
 import java.lang.reflect.Proxy;
-import java.net.Socket;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Optional;
 
+import net.sf.lipermi.TCPFullDuplexStream;
+import net.sf.lipermi.exception.LipeRMIException;
 import net.sf.lipermi.handler.CallHandler;
 import net.sf.lipermi.handler.CallProxy;
 import net.sf.lipermi.handler.ConnectionHandler;
@@ -46,20 +49,31 @@ import net.sf.lipermi.handler.filter.IProtocolFilter;
  * @date   05/10/2006
  *
  * @see    net.sf.lipermi.handler.CallHandler
- * @see    net.sf.lipermi.net.Server
  */
-public class Client {
+public class BaseClient implements Closeable {
 
-    private Socket socket;
+    private final TCPFullDuplexStream TCPStream;
 
-    private ConnectionHandler connectionHandler;
+    private final ConnectionHandler connectionHandler;
 
-    private List<IClientListener> listeners = new LinkedList<IClientListener>();
+    private final List<IClientListener> listeners = new LinkedList<IClientListener>();
 
     private final IConnectionHandlerListener connectionHandlerListener = () -> {
             for (IClientListener listener : listeners)
                 listener.disconnected();
     };
+    protected BaseClient(TCPFullDuplexStream stream, CallHandler callHandler, Optional<IProtocolFilter> filter) {
+        if( stream == null ) throw new IllegalArgumentException("stream argument is null!");
+        if( callHandler == null ) throw new IllegalArgumentException("callHandler argument is null!");
+        if( filter == null ) throw new IllegalArgumentException("filter argument is null!");
+
+        TCPStream = stream;
+        connectionHandler =
+            ConnectionHandler.of(   stream,
+                                    callHandler,
+                                    filter.orElseGet( () -> new DefaultFilter()),
+                                    connectionHandlerListener);
+    }
 
     public void addClientListener(IClientListener listener) {
         listeners.add(listener);
@@ -69,22 +83,15 @@ public class Client {
         listeners.remove(listener);
     }
 
-    public Client(String address, int port, CallHandler callHandler) throws IOException {
-        this(address, port, callHandler, new DefaultFilter());
-    }
-
-    public Client(String address, int port, CallHandler callHandler, IProtocolFilter filter) throws IOException {
-        socket = new Socket(address, port);
-        connectionHandler = ConnectionHandler.createConnectionHandler(socket, callHandler, filter, connectionHandlerListener);
-    }
-
-    public void close() throws IOException {
-        socket.close();
-    }
-
     public <T> T getGlobal(Class<T> clazz) {
         return (T)Proxy.newProxyInstance(clazz.getClassLoader(), new Class[] { clazz }, new CallProxy(connectionHandler));
     }
-}
 
-// vim: ts=4:sts=4:sw=4:expandtab
+    public void exportObject(Class<?> cInterface, Object exportedObject) throws LipeRMIException {
+        connectionHandler.getCallHandler().exportObject(cInterface, exportedObject);
+    }
+
+    public void close() throws IOException {
+        TCPStream.close();
+    }
+}

@@ -29,6 +29,7 @@ import java.net.Socket;
 import java.util.LinkedList;
 import java.util.List;
 
+import net.sf.lipermi.FullDuplexSocketStreamAdapter;
 import net.sf.lipermi.handler.CallHandler;
 import net.sf.lipermi.handler.ConnectionHandler;
 import net.sf.lipermi.handler.IConnectionHandlerListener;
@@ -46,7 +47,7 @@ import net.sf.lipermi.handler.filter.IProtocolFilter;
  * @date   05/10/2006
  *
  * @see    net.sf.lipermi.handler.CallHandler
- * @see    net.sf.lipermi.net.Client
+ * @see    BaseClient
  */
 public class Server {
 
@@ -93,20 +94,17 @@ public class Server {
                 try {
                     acceptSocket = serverSocket.accept();
 
-                    final Socket clientSocket = acceptSocket;
-                    ConnectionHandler.createConnectionHandler(clientSocket,
-                            callHandler,
-                            filter,
-                            new IConnectionHandlerListener() {
-
-                        public void connectionClosed() {
-                            for (IServerListener listener : listeners)
-                                listener.clientDisconnected(clientSocket);
-                        }
-
-                    });
+                    final FullDuplexSocketStreamAdapter socketAdapter =
+                            new FullDuplexSocketStreamAdapter(acceptSocket);
+                    ConnectionHandler.of(   socketAdapter,
+                                            callHandler,
+                                            filter,
+                                            () -> {
+                                                for (IServerListener listener : listeners)
+                                                    listener.clientDisconnected(socketAdapter.getSocket());
+                                            });
                     for (IServerListener listener : listeners)
-                        listener.clientConnected(clientSocket);
+                        listener.clientConnected(socketAdapter.getSocket());
                 } catch (IOException e) {
                     e.printStackTrace();
                 }

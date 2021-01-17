@@ -52,7 +52,7 @@ public class CallHandler {
 
     private Map<RemoteInstance, Object> exportedObjects = new HashMap<RemoteInstance, Object>();
 
-    @SuppressWarnings("unchecked") //$NON-NLS-1$
+
     public void registerGlobal(Class cInterface, Object objImplementation) throws LipeRMIException {
         exportObject(cInterface, objImplementation, null);
     }
@@ -64,8 +64,7 @@ public class CallHandler {
         exportObject(cInterface, exportedObject, instanceId);
     }
 
-    @SuppressWarnings("unchecked") //$NON-NLS-1$
-    private void exportObject(Class cInterface, Object objImplementation, String instanceId) throws LipeRMIException {
+    private void exportObject(Class<?> cInterface, Object objImplementation, String instanceId) throws LipeRMIException {
         if (!cInterface.isAssignableFrom(objImplementation.getClass()))
             throw new LipeRMIException(String.format("Class %s is not assignable from %s", objImplementation.getClass().getName(), cInterface.getName())); //$NON-NLS-1$
 
@@ -138,5 +137,3 @@ public class CallHandler {
         return argClasses;
     }
 }
-
-// vim: ts=4:sts=4:sw=4:expandtab

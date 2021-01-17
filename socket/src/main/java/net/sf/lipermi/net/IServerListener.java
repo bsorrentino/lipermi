@@ -19,7 +19,6 @@
  * For more information, see http://lipermi.sourceforge.net/license.php
  * You can also contact author through lipeandrade@users.sourceforge.net
  */
-
 package net.sf.lipermi.net;
 
 import java.net.Socket;
@@ -36,9 +35,9 @@ import java.net.Socket;
  */
 public interface IServerListener {
 
-    void clientConnected(Socket socket);
+  void clientConnected(Socket socket);
 
-    void clientDisconnected(Socket socket);
+  void clientDisconnected(Socket socket);
 
 }
 

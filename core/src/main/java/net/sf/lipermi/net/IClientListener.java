@@ -29,12 +29,11 @@ package net.sf.lipermi.net;
  * @date   07/10/2006
  * @author lipe
  *
- * @see    net.sf.lipermi.net.Client
+ * @see    BaseClient
  */
+@FunctionalInterface
 public interface IClientListener {
 
     void disconnected();
 
 }
-
-// vim: ts=4:sts=4:sw=4:expandtab
