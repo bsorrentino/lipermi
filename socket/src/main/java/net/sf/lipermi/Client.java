@@ -19,28 +19,34 @@
  * For more information, see http://lipermi.sourceforge.net/license.php
  * You can also contact author through lipeandrade@users.sourceforge.net
  */
-package net.sf.lipermi.rmi;
 
-import net.sf.lipermi.rmi.Server;
+package net.sf.lipermi;
 
+import net.sf.lipermi.handler.CallHandler;
+import net.sf.lipermi.handler.filter.IProtocolFilter;
+import net.sf.lipermi.net.BaseClient;
+
+import java.io.IOException;
 import java.net.Socket;
+import java.util.Optional;
+
 
 /**
- * This listener can be used to monitor a Server.
- * (ie. know when it receives new connections or
- *  close it)
+ * The LipeRMI client.
+ * Connects to a LipeRMI Server in a address:port
+ * and create local dynamic proxys to call remote
+ * methods through a simple interface.
  *
- * @date   07/10/2006
  * @author lipe
+ * @date   05/10/2006
  *
+ * @see    net.sf.lipermi.handler.CallHandler
  * @see    Server
  */
-public interface IServerListener {
+public class Client extends BaseClient {
 
-  void clientConnected(Socket socket);
-
-  void clientDisconnected(Socket socket);
+    public Client(String address, int port, CallHandler callHandler, Optional<IProtocolFilter> filter) throws IOException {
+        super(new FullDuplexSocketStreamAdapter(new Socket( address, port )), callHandler, filter);
+    }
 
 }
-
-// vim: ts=4:sts=4:sw=4:expandtab

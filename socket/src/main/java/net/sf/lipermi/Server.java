@@ -20,7 +20,7 @@
  * You can also contact author through lipeandrade@users.sourceforge.net
  */
 
-package net.sf.lipermi.rmi;
+package net.sf.lipermi;
 
 import java.io.IOException;
 import java.net.InetSocketAddress;
@@ -30,7 +30,6 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Optional;
 
-import net.sf.lipermi.FullDuplexSocketStreamAdapter;
 import net.sf.lipermi.handler.CallHandler;
 import net.sf.lipermi.handler.ConnectionHandler;
 import net.sf.lipermi.handler.filter.DefaultFilter;
@@ -50,7 +49,7 @@ import net.sf.lipermi.net.BaseClient;
  * @see    net.sf.lipermi.handler.CallHandler
  * @see    BaseClient
  */
-class Server {
+public class Server {
 
     private ServerSocket serverSocket;
 

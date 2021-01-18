@@ -1,12 +1,11 @@
 package net.sf.lipermi.rmi;
 
+import net.sf.lipermi.Client;
+import net.sf.lipermi.Server;
 import net.sf.lipermi.exception.LipeRMIException;
-import net.sf.lipermi.handler.CallLookup;
-import net.sf.lipermi.handler.filter.GZipFilter;
 
 import java.io.IOException;
 import java.net.InetAddress;
-import java.net.Socket;
 
 import static java.util.Optional.empty;
 
@@ -58,7 +57,7 @@ public final class LocateRegistry {
    * @param port
    * @return
    */
-  public static Registry	createRegistry(int port) throws LipeRMIException {
+  public static Registry createRegistry(int port) throws LipeRMIException {
 
     try {
 
@@ -76,11 +75,12 @@ public final class LocateRegistry {
    * @param port
    * @return
    */
-  public static Registry getRegistry(int port) throws LipeRMIException {
+  public static Registry getRegistry(String host, int port) throws LipeRMIException {
+    if( host == null ) throw new IllegalArgumentException("host argument is null!");
+
     try {
 
-      final String address = InetAddress.getLocalHost().getHostAddress();
-      final Client client = new Client(address, port, UnicastRemoteObject.callHandler, empty());
+      final Client client = new Client(host, port, UnicastRemoteObject.callHandler, empty());
       return new ClientRegistry(client);
     }
     catch( Exception ex ) {
