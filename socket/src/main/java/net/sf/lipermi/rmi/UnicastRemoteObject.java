@@ -12,6 +12,9 @@ public class UnicastRemoteObject implements Serializable {
     callHandler.exportObject( ifc, obj);
     return obj;
   }
+  public static boolean	unexportObject(Object obj, boolean force)  {
+    throw new UnsupportedOperationException("unexportObject is not implemented yet!");
+  }
 
   public UnicastRemoteObject() {
   }
