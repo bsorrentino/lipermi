@@ -19,7 +19,9 @@
  * For more information, see http://lipermi.sourceforge.net/license.php
  * You can also contact author through lipeandrade@users.sourceforge.net
  */
-package net.sf.lipermi.net;
+package net.sf.lipermi.rmi;
+
+import net.sf.lipermi.rmi.Server;
 
 import java.net.Socket;
 
@@ -31,7 +33,7 @@ import java.net.Socket;
  * @date   07/10/2006
  * @author lipe
  *
- * @see    net.sf.lipermi.net.Server
+ * @see    Server
  */
 public interface IServerListener {
 

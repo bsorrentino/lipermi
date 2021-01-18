@@ -20,26 +20,16 @@
  * You can also contact author through lipeandrade@users.sourceforge.net
  */
 
-package net.sf.lipermi.net;
+package net.sf.lipermi.rmi;
 
 import java.io.IOException;
-import java.lang.reflect.Proxy;
 import java.net.Socket;
-import java.util.LinkedList;
-import java.util.List;
 import java.util.Optional;
 
 import net.sf.lipermi.FullDuplexSocketStreamAdapter;
-import net.sf.lipermi.TCPFullDuplexStream;
 import net.sf.lipermi.handler.CallHandler;
-import net.sf.lipermi.handler.CallProxy;
-import net.sf.lipermi.handler.ConnectionHandler;
-import net.sf.lipermi.handler.IConnectionHandlerListener;
-import net.sf.lipermi.handler.filter.DefaultFilter;
 import net.sf.lipermi.handler.filter.IProtocolFilter;
-
-import static java.util.Optional.empty;
-import static java.util.Optional.ofNullable;
+import net.sf.lipermi.net.BaseClient;
 
 
 /**
@@ -52,33 +42,12 @@ import static java.util.Optional.ofNullable;
  * @date   05/10/2006
  *
  * @see    net.sf.lipermi.handler.CallHandler
- * @see    net.sf.lipermi.net.Server
+ * @see    Server
  */
-public class Client extends  BaseClient {
+class Client extends BaseClient {
 
-    public class Builder {
-
+    protected Client(String address, int port, CallHandler callHandler, Optional<IProtocolFilter> filter) throws IOException {
+        super(new FullDuplexSocketStreamAdapter(new Socket( address, port )), callHandler, filter);
     }
 
-    protected Client(TCPFullDuplexStream stream, CallHandler callHandler, Optional<IProtocolFilter> filter) {
-        super(stream, callHandler, filter);
-    }
-
-    public static Client of( String address, int port ) throws Exception {
-
-        final Socket socket = new Socket( address, port );
-        final FullDuplexSocketStreamAdapter socketAdapter = new FullDuplexSocketStreamAdapter(socket);
-        final CallHandler callHandler = new CallHandler();
-
-        return new Client( socketAdapter, callHandler, empty() );
-    }
-
-    public static Client of( String address, int port, IProtocolFilter filter ) throws Exception {
-
-        final Socket socket = new Socket( address, port );
-        final FullDuplexSocketStreamAdapter socketAdapter = new FullDuplexSocketStreamAdapter(socket);
-        final CallHandler callHandler = new CallHandler();
-
-        return new Client( socketAdapter, callHandler, ofNullable(filter) );
-    }
 }

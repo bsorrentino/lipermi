@@ -20,7 +20,7 @@
  * You can also contact author through lipeandrade@users.sourceforge.net
  */
 
-package net.sf.lipermi.net;
+package net.sf.lipermi.rmi;
 
 import java.io.IOException;
 import java.net.InetSocketAddress;
@@ -28,13 +28,14 @@ import java.net.ServerSocket;
 import java.net.Socket;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Optional;
 
 import net.sf.lipermi.FullDuplexSocketStreamAdapter;
 import net.sf.lipermi.handler.CallHandler;
 import net.sf.lipermi.handler.ConnectionHandler;
-import net.sf.lipermi.handler.IConnectionHandlerListener;
 import net.sf.lipermi.handler.filter.DefaultFilter;
 import net.sf.lipermi.handler.filter.IProtocolFilter;
+import net.sf.lipermi.net.BaseClient;
 
 
 /**
@@ -49,7 +50,7 @@ import net.sf.lipermi.handler.filter.IProtocolFilter;
  * @see    net.sf.lipermi.handler.CallHandler
  * @see    BaseClient
  */
-public class Server {
+class Server {
 
     private ServerSocket serverSocket;
 
@@ -69,15 +70,7 @@ public class Server {
         enabled = false;
     }
 
-    public int bind(final CallHandler callHandler) throws IOException {
-        return bind(-1, callHandler);
-    }
-
-    public int bind(int port, final CallHandler callHandler) throws IOException {
-        return bind(port, callHandler, new DefaultFilter());
-    }
-
-    public int bind(int port, final CallHandler callHandler, final IProtocolFilter filter) throws IOException {
+    public int bind(int port, final CallHandler callHandler, Optional<IProtocolFilter> filter) throws IOException {
         serverSocket = new ServerSocket();
         serverSocket.setPerformancePreferences(1, 0, 2);
         enabled = true;
@@ -88,7 +81,7 @@ public class Server {
             serverSocket.bind(null);
         }
 
-        Thread bindThread = new Thread(() -> {
+        final Thread bindThread = new Thread(() -> {
             while (enabled) {
                 Socket acceptSocket = null;
                 try {
@@ -98,7 +91,7 @@ public class Server {
                             new FullDuplexSocketStreamAdapter(acceptSocket);
                     ConnectionHandler.of(   socketAdapter,
                                             callHandler,
-                                            filter,
+                                            filter.orElseGet( () -> new DefaultFilter()),
                                             () -> {
                                                 for (IServerListener listener : listeners)
                                                     listener.clientDisconnected(socketAdapter.getSocket());
