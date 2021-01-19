@@ -25,8 +25,12 @@ package net.sf.lipermi.handler;
 import java.lang.reflect.InvocationHandler;
 import java.lang.reflect.Method;
 import java.lang.reflect.Proxy;
+import java.util.Arrays;
+import java.util.stream.Collectors;
 
 import net.sf.lipermi.call.RemoteInstance;
+
+import static java.util.stream.Collectors.joining;
 
 /**
  * A dynamic proxy which delegates interface
@@ -38,8 +42,9 @@ import net.sf.lipermi.call.RemoteInstance;
  * @see       net.sf.lipermi.handler.CallHandler
  */
 public class CallProxy implements InvocationHandler  {
+    private static final org.slf4j.Logger log = org.slf4j.LoggerFactory.getLogger(CallProxy.class);
 
-    private ConnectionHandler connectionHandler;
+    private final ConnectionHandler connectionHandler;
 
     /**
      * Create new CallProxy with a ConnectionHandler which will
@@ -55,6 +60,17 @@ public class CallProxy implements InvocationHandler  {
      * Delegates call to this proxy to it's ConnectionHandler
      */
     public Object invoke(Object proxy, Method method, Object[] args) throws Throwable {
+        if( log.isTraceEnabled()) {
+            final Class<?> ifc[] = proxy.getClass().getInterfaces();
+            final Class<?>  clazz = ( ifc!=null && ifc.length > 0 ) ? ifc[0] :proxy.getClass();
+            final String argsType = Arrays.stream(args).map( String::valueOf).collect(joining(","));
+            log.trace( "invoke on instance of {} method:{} ( {} )",
+                    clazz.getName(),
+                    method.getName(),
+                    argsType
+            );
+
+        }
         return connectionHandler.remoteInvocation(proxy, method, args);
     }
 
