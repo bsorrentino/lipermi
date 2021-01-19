@@ -22,10 +22,12 @@
 
 package net.sf.lipermi.handler;
 
+import java.lang.invoke.MethodHandles;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Optional;
 import java.util.UUID;
 
 import net.sf.lipermi.call.RemoteCall;
@@ -79,7 +81,8 @@ public class CallHandler {
     }
 
     public RemoteReturn delegateCall(RemoteCall remoteCall) throws LipeRMIException, SecurityException, NoSuchMethodException, IllegalArgumentException, IllegalAccessException {
-        Object implementator = exportedObjects.get(remoteCall.getRemoteInstance());
+
+        final Object implementator = exportedObjects.get(remoteCall.getRemoteInstance());
         if (implementator == null)
             throw new LipeRMIException(String.format("Class %s doesn't have implementation", remoteCall.getRemoteInstance().getClassName())); //$NON-NLS-1$
 
@@ -115,6 +118,12 @@ public class CallHandler {
         return remoteReturn;
     }
 
+    public <T> Optional<T> getExportedObject(Class<T> ifc ) {
+        return exportedObjects.entrySet().stream()
+                .filter( e -> e.getKey().getClassName().equals(ifc.getName()) )
+                .map( e -> (T)e.getValue() )
+                .findFirst();
+    }
 
     RemoteInstance getRemoteReference(Object obj) {
         for (RemoteInstance remoteInstance : exportedObjects.keySet()) {
