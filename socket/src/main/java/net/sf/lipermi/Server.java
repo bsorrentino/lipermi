@@ -90,7 +90,7 @@ public class Server {
                             new FullDuplexSocketStreamAdapter(acceptSocket);
                     ConnectionHandler.of(   socketAdapter,
                                             callHandler,
-                                            filter.orElseGet( () -> new DefaultFilter()),
+                                            filter.orElseGet(DefaultFilter::new),
                                             () -> {
                                                 for (IServerListener listener : listeners)
                                                     listener.clientDisconnected(socketAdapter.getSocket());

@@ -6,7 +6,7 @@ public interface Registry {
 
   void bind(Class<?> ifc, Object obj) throws LipeRMIException;
 
-  <T> T lookup(Class<T> ifc);
+  <T> T lookup(Class<T> ifc) throws LipeRMIException;
 
   default void rebind( Class<?> ifc, Object obj ) throws LipeRMIException {
     bind( ifc, obj );
@@ -17,7 +17,7 @@ public interface Registry {
   }
 
   default Class<?>[]	list() {
-    return new Class<?>[] {};
+    throw new UnsupportedOperationException("list is not supported yet!");
   }
 
 }
