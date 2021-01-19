@@ -71,7 +71,7 @@ public class BaseClient implements Closeable {
         connectionHandler =
             ConnectionHandler.of(   stream,
                                     callHandler,
-                                    filter.orElseGet( () -> new DefaultFilter()),
+                                    filter.orElseGet(DefaultFilter::new),
                                     connectionHandlerListener);
     }
 
@@ -84,11 +84,9 @@ public class BaseClient implements Closeable {
     }
 
     public <T> T getGlobal(Class<T> clazz) {
-        return (T)Proxy.newProxyInstance(clazz.getClassLoader(), new Class[] { clazz }, new CallProxy(connectionHandler));
-    }
-
-    public void exportObject(Class<?> cInterface, Object exportedObject) throws LipeRMIException {
-        connectionHandler.getCallHandler().exportObject(cInterface, exportedObject);
+        return (T)Proxy.newProxyInstance(clazz.getClassLoader(),
+                                new Class[] { clazz },
+                                new CallProxy(connectionHandler));
     }
 
     public void close() throws IOException {
