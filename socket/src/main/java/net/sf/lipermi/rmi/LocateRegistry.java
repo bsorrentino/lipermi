@@ -96,6 +96,18 @@ public final class LocateRegistry {
       return lazyClient.get().getGlobal(ifc);
     }
 
+    @Override
+    public String[] list() throws LipeRMIException {
+
+      if( lazyServer.isPresent() || lazyClient.isPresent() ) {
+        return UnicastRemoteObject.callHandler.getExportedObjects()
+                .stream()
+                .map( ri -> ri.getClassName())
+                .toArray( String[]::new );
+      }
+      throw new LipeRMIException("the registry is not connected yet!");
+    }
+
   }
 
   private static Optional<RegistryImpl> lazySingletonRegistry = empty();

@@ -16,8 +16,6 @@ public interface Registry {
     throw new UnsupportedOperationException("unbind is not supported yet!");
   }
 
-  default Class<?>[]	list() {
-    throw new UnsupportedOperationException("list is not supported yet!");
-  }
+  String[] list() throws LipeRMIException;
 
 }
