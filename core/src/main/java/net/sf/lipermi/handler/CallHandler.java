@@ -25,10 +25,7 @@ package net.sf.lipermi.handler;
 import java.lang.invoke.MethodHandles;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Optional;
-import java.util.UUID;
+import java.util.*;
 
 import net.sf.lipermi.call.RemoteCall;
 import net.sf.lipermi.call.RemoteInstance;
@@ -118,6 +115,20 @@ public class CallHandler {
         return remoteReturn;
     }
 
+    /**
+     *
+     * @return all exported objects
+     */
+    public Collection<RemoteInstance> getExportedObjects() {
+        return exportedObjects.keySet();
+    }
+
+    /**
+     *
+     * @param ifc
+     * @param <T>
+     * @return
+     */
     public <T> Optional<T> getExportedObject(Class<T> ifc ) {
         return exportedObjects.entrySet().stream()
                 .filter( e -> e.getKey().getClassName().equals(ifc.getName()) )
@@ -125,13 +136,22 @@ public class CallHandler {
                 .findFirst();
     }
 
-    RemoteInstance getRemoteReference(Object obj) {
-        for (RemoteInstance remoteInstance : exportedObjects.keySet()) {
-            Object exportedObj = exportedObjects.get(remoteInstance);
-            if (exportedObj == obj)
-                return remoteInstance;
-        }
-        return null;
+    /**
+     *
+     * @param obj
+     * @return
+     */
+    Optional<RemoteInstance> getRemoteReference(Object obj) {
+        return exportedObjects.entrySet().stream()
+                .filter( e -> obj == e.getValue() )
+                .map( e -> e.getKey() )
+                .findFirst();
+//        for (RemoteInstance remoteInstance : exportedObjects.keySet()) {
+//            Object exportedObj = exportedObjects.get(remoteInstance);
+//            if (exportedObj == obj)
+//                return remoteInstance;
+//        }
+//        return null;
     }
 
     public static Class<?>[] typeFromObjects(Object[] objects) {
