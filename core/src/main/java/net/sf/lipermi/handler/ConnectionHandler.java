@@ -26,10 +26,7 @@ import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.lang.reflect.Method;
-import java.util.HashMap;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.concurrent.atomic.AtomicLong;
 
 import net.sf.lipermi.TCPFullDuplexStream;
@@ -40,6 +37,8 @@ import net.sf.lipermi.call.RemoteReturn;
 import net.sf.lipermi.exception.LipeRMIException;
 import net.sf.lipermi.handler.filter.IProtocolFilter;
 import net.sf.lipermi.net.BaseClient;
+
+import static java.lang.String.format;
 
 
 /**
@@ -54,15 +53,15 @@ import net.sf.lipermi.net.BaseClient;
  * @see       net.sf.lipermi.call.RemoteCall
  * @see       net.sf.lipermi.call.RemoteReturn
  * @see       BaseClient
- * @see       net.sf.lipermi.net.Server
  * @see       net.sf.lipermi.handler.filter.DefaultFilter
  */
 public class ConnectionHandler implements Runnable {
+    private static final org.slf4j.Logger log = org.slf4j.LoggerFactory.getLogger(ConnectionHandler.class);
 
     public static ConnectionHandler of(TCPFullDuplexStream socket, CallHandler callHandler, IProtocolFilter filter) {
         ConnectionHandler connectionHandler = new ConnectionHandler(socket, callHandler, filter);
 
-        String threadName = String.format("ConnectionHandler (%s:%d)", socket.getInetAddress().getHostAddress(), socket.getPort()); //$NON-NLS-1$
+        String threadName = format("ConnectionHandler (%s:%d)", socket.getInetAddress().getHostAddress(), socket.getPort());
         Thread connectionHandlerThread = new Thread(connectionHandler, threadName);
         connectionHandlerThread.setDaemon(true);
         connectionHandlerThread.start();
@@ -130,22 +129,21 @@ public class ConnectionHandler implements Runnable {
                         }
                     }
 
-                    Thread delegator = new Thread(() -> {
+                    final Thread delegator = new Thread(() -> {
                         CallLookup.handlingMe(ConnectionHandler.this);
 
-                        RemoteReturn remoteReturn;
+
                         try {
-//                                System.out.println("remoteCall: " + remoteCall.getCallId() + " - " + remoteCall.getRemoteInstance().getInstanceId());
-//                                System.out.println("(" + remoteCall.getCallId() + ") " + remoteCall.getArgs()[0]);
-                            remoteReturn = callHandler.delegateCall(remoteCall);
-//                                System.out.println("(" + remoteCall.getCallId() + ") " + remoteReturn.getRet());
+                            log.trace( "remoteCall: {} - {}}", remoteCall.getCallId(), remoteCall.getRemoteInstance().getInstanceId());
+                            final RemoteReturn remoteReturn = callHandler.delegateCall(remoteCall);
+                            log.trace("({})={}", remoteCall.getCallId(), remoteReturn.getRet());
                             sendMessage(remoteReturn);
                         } catch (Exception e) {
-                            e.printStackTrace();
+                            log.error( "remoteCall error", e );
                         }
 
                         CallLookup.forgetMe();
-                    }, "Delegator"); //$NON-NLS-1$
+                    }, "Delegator");
                     delegator.setDaemon(true);
                     delegator.start();
                 }
@@ -157,12 +155,14 @@ public class ConnectionHandler implements Runnable {
                     }
                 }
                 else
-                    throw new LipeRMIException("Unknown IRemoteMessage type"); //$NON-NLS-1$
+                    throw new LipeRMIException("Unknown IRemoteMessage type");
             }
         } catch (Exception e) {
             try {
                 tcpStream.close();
-            } catch (IOException e1) {}
+            } catch (IOException ex) {
+                log.warn( "error closing tcpStream: {}", ex.getMessage() );
+            }
 
             synchronized (remoteReturns) {
                 remoteReturns.notifyAll();
@@ -193,15 +193,15 @@ public class ConnectionHandler implements Runnable {
 
         if (args != null) {
             for (int n = 0; n < args.length; n++) {
-                RemoteInstance remoteRef = callHandler.getRemoteReference(args[n]);
-                if (remoteRef != null)
-                    args[n] = remoteRef;
+                final Optional<RemoteInstance> remoteRef = callHandler.getRemoteReference(args[n]);
+                if (remoteRef.isPresent())
+                    args[n] = remoteRef.get();
             }
         }
 
-        String methodId = method.toString().substring(15);
+        final String methodId = method.toString().substring(15);
+        final IRemoteMessage remoteCall = new RemoteCall(remoteInstance, methodId, args, id);
 
-        IRemoteMessage remoteCall = new RemoteCall(remoteInstance, methodId, args, id);
         sendMessage(remoteCall);
 
         RemoteReturn remoteReturn = null;
@@ -222,7 +222,10 @@ public class ConnectionHandler implements Runnable {
                     try {
                         remoteReturns.wait();
                     }
-                    catch (InterruptedException ie) {}
+                    catch (InterruptedException ie) {
+                        log.warn("wait for remote return iterrupted!");
+                        break;
+                    }
                 }
             }
         }
@@ -253,7 +256,7 @@ public class ConnectionHandler implements Runnable {
             try {
                 proxy = CallProxy.buildProxy(remoteInstance, this);
             } catch (ClassNotFoundException e) {
-                e.printStackTrace();
+                log.error( "buildProxy error", e);
             }
             remoteInstanceProxys.put(remoteInstance, proxy);
         }
@@ -277,5 +280,3 @@ public class ConnectionHandler implements Runnable {
         return tcpStream;
     }
 }
-
-// vim: ts=4:sts=4:sw=4:expandtab
