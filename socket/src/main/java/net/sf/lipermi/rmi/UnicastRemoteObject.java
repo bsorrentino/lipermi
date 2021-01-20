@@ -4,7 +4,8 @@ import net.sf.lipermi.handler.CallHandler;
 
 import java.io.Serializable;
 
-public class UnicastRemoteObject implements Serializable {
+public class UnicastRemoteObject implements Serializable  {
+  private static final org.slf4j.Logger log = org.slf4j.LoggerFactory.getLogger(UnicastRemoteObject.class);
 
   static final CallHandler callHandler = new CallHandler();
 
@@ -13,7 +14,9 @@ public class UnicastRemoteObject implements Serializable {
     return obj;
   }
   public static boolean	unexportObject(Object obj, boolean force)  {
-    throw new UnsupportedOperationException("unexportObject is not implemented yet!");
+    log.warn( "unexportObject( obj:{}, force:{} ) is not implemented yet!", obj, force);
+    return true;
+    //throw new UnsupportedOperationException("unexportObject is not implemented yet!");
   }
 
   public UnicastRemoteObject() {

@@ -22,15 +22,14 @@
 
 package net.sf.lipermi.handler;
 
-import java.lang.invoke.MethodHandles;
-import java.lang.reflect.InvocationTargetException;
-import java.lang.reflect.Method;
-import java.util.*;
-
 import net.sf.lipermi.call.RemoteCall;
 import net.sf.lipermi.call.RemoteInstance;
 import net.sf.lipermi.call.RemoteReturn;
 import net.sf.lipermi.exception.LipeRMIException;
+
+import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
+import java.util.*;
 
 import static java.lang.String.format;
 
