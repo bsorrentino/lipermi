@@ -32,19 +32,6 @@ public final class LocateRegistry {
       this.host = Optional.of(host);
     }
 
-    public void setHost( String value ) {
-      if( host.isPresent() ) {
-
-        if (!host.get().equalsIgnoreCase(value)) {
-          throw new IllegalStateException(format("host is already set %s with different given value %s!", host.get(), value));
-        }
-
-        return; // ignored
-      }
-
-      host = Optional.of(value);
-    }
-
     @Override
     public void bind(Class<?> ifc, Object obj) throws LipeRMIException {
       log.trace( "bind {}", ifc.getName());
@@ -143,7 +130,6 @@ public final class LocateRegistry {
         final RegistryImpl reg = new RegistryImpl(host, port);
         lazySingletonRegistry = Optional.of( reg );
       }
-      lazySingletonRegistry.get().setHost(host);
       return lazySingletonRegistry.get();
     }
     catch( Exception ex ) {

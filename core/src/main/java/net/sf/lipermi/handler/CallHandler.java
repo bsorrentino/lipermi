@@ -32,6 +32,8 @@ import net.sf.lipermi.call.RemoteInstance;
 import net.sf.lipermi.call.RemoteReturn;
 import net.sf.lipermi.exception.LipeRMIException;
 
+import static java.lang.String.format;
+
 
 /**
  * A handler who know a RemoteInstance and it
@@ -65,11 +67,11 @@ public class CallHandler {
 
     private void exportObject(Class<?> cInterface, Object objImplementation, String instanceId) throws LipeRMIException {
         if (!cInterface.isAssignableFrom(objImplementation.getClass()))
-            throw new LipeRMIException(String.format("Class %s is not assignable from %s", objImplementation.getClass().getName(), cInterface.getName())); //$NON-NLS-1$
+            throw new LipeRMIException(format("Class %s is not assignable from %s", objImplementation.getClass().getName(), cInterface.getName())); //$NON-NLS-1$
 
         for (RemoteInstance remoteInstance : exportedObjects.keySet()) {
             if ((remoteInstance.getInstanceId() == instanceId || (remoteInstance.getInstanceId() != null && remoteInstance.getInstanceId().equals(instanceId))) && remoteInstance.getClassName().equals(cInterface.getName())) {
-                throw new LipeRMIException(String.format("Class %s already has a implementation class", cInterface.getName()));                 //$NON-NLS-1$
+                throw new LipeRMIException(format("Class %s already has a implementation class", cInterface.getName()));                 //$NON-NLS-1$
             }
         }
 
@@ -81,7 +83,7 @@ public class CallHandler {
 
         final Object implementator = exportedObjects.get(remoteCall.getRemoteInstance());
         if (implementator == null)
-            throw new LipeRMIException(String.format("Class %s doesn't have implementation", remoteCall.getRemoteInstance().getClassName())); //$NON-NLS-1$
+            throw new LipeRMIException(format("Class %s doesn't have implementation", remoteCall.getRemoteInstance().getClassName()));
 
         RemoteReturn remoteReturn;
 
@@ -101,9 +103,11 @@ public class CallHandler {
             throw new NoSuchMethodException(remoteCall.getMethodId());
 
         try {
-            Object methodReturn = null;
+
             implementationMethod.setAccessible(true);
-            methodReturn = implementationMethod.invoke(implementator, remoteCall.getArgs());
+
+            Object methodReturn = implementationMethod.invoke(implementator, remoteCall.getArgs());
+
             if (exportedObjects.containsValue(methodReturn))
                 methodReturn = getRemoteReference(methodReturn);
 
