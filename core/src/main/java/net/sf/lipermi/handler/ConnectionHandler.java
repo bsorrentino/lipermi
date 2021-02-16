@@ -164,8 +164,7 @@ public class ConnectionHandler implements Runnable {
     final synchronized Object remoteInvocation(final Object proxy, final Method method, final Object[] args) throws Throwable {
         final Long id = callId.getAndIncrement();
 
-        RemoteInstance remoteInstance;
-        remoteInstance = getRemoteInstanceFromProxy(proxy);
+        RemoteInstance remoteInstance = getRemoteInstanceFromProxy(proxy);
         if (remoteInstance == null)
             remoteInstance = new RemoteInstance(null, proxy.getClass().getInterfaces()[0].getName());
 
