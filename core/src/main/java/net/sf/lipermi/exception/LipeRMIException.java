@@ -22,6 +22,8 @@
 
 package net.sf.lipermi.exception;
 
+import static java.lang.String.format;
+
 /**
  * General LipeRMI exception
  *
@@ -40,8 +42,8 @@ public class LipeRMIException extends Exception {
         super(message, cause);
     }
 
-    public LipeRMIException(String message) {
-        super(message);
+    public LipeRMIException(String message, Object ...args) {
+        super( format( message, args) );
     }
 
     public LipeRMIException(Throwable cause) {
