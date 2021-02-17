@@ -20,9 +20,11 @@ public class UnicastRemoteObject implements Serializable  {
   }
 
   public UnicastRemoteObject() {
+    log.trace( "new UnicastRemoteObject");
   }
 
   public UnicastRemoteObject(int port) {
+    log.trace( "new UnicastRemoteObject({})", port);
   }
 
 }

@@ -7,6 +7,8 @@ import java.net.InetAddress;
 import java.net.Socket;
 
 public class FullDuplexSocketStreamAdapter implements TCPFullDuplexStream {
+  private static final org.slf4j.Logger log = org.slf4j.LoggerFactory.getLogger(TCPFullDuplexStream.class);
+
   final Socket socket;
 
   public FullDuplexSocketStreamAdapter(Socket socket) {
@@ -45,6 +47,7 @@ public class FullDuplexSocketStreamAdapter implements TCPFullDuplexStream {
 
   @Override
   public void close() throws IOException {
+    log.trace( "close socket!");
     socket.close();
   }
 }

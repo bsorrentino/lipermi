@@ -24,14 +24,13 @@ import static java.lang.String.format;
  * methods, receive remote calls and dispatch its returns.
  *
  * @author lipe
- * @date   05/10/2006
- *
- * @see       net.sf.lipermi.handler.CallHandler
- * @see       net.sf.lipermi.call.RemoteInstance
- * @see       net.sf.lipermi.call.RemoteCall
- * @see       net.sf.lipermi.call.RemoteReturn
- * @see       BaseClient
- * @see       net.sf.lipermi.handler.filter.DefaultFilter
+ * @date 05/10/2006
+ * @see net.sf.lipermi.handler.CallHandler
+ * @see net.sf.lipermi.call.RemoteInstance
+ * @see net.sf.lipermi.call.RemoteCall
+ * @see net.sf.lipermi.call.RemoteReturn
+ * @see BaseClient
+ * @see net.sf.lipermi.handler.filter.DefaultFilter
  */
 public class ConnectionHandler implements Runnable {
     private static final org.slf4j.Logger log = org.slf4j.LoggerFactory.getLogger(ConnectionHandler.class);
@@ -90,9 +89,9 @@ public class ConnectionHandler implements Runnable {
             input = new ObjectInputStream(tcpStream.getInputStream());
 
             while (tcpStream.isConnected()) {
-                Object objFromStream = input.readUnshared();
+                final Object objFromStream = input.readUnshared();
 
-                IRemoteMessage remoteMessage = filter.readObject(objFromStream);
+                final IRemoteMessage remoteMessage = filter.readObject(objFromStream);
 
                 if (remoteMessage instanceof RemoteCall) {
 
@@ -110,36 +109,38 @@ public class ConnectionHandler implements Runnable {
                     final Thread delegator = new Thread(() -> {
                         CallLookup.handlingMe(ConnectionHandler.this);
 
-
                         try {
-                            log.trace( "remoteCall: {} - {}}", remoteCall.getCallId(), remoteCall.getRemoteInstance().getInstanceId());
+
+                            log.trace("remoteCall: {} - {}", remoteCall.getCallId(), remoteCall.getRemoteInstance().getInstanceId());
                             final RemoteReturn remoteReturn = callHandler.delegateCall(remoteCall);
+
                             log.trace("({})={}", remoteCall.getCallId(), remoteReturn.getRet());
                             sendMessage(remoteReturn);
+
                         } catch (Exception e) {
-                            log.error( "remoteCall error", e );
+                            log.error("remoteCall error", e);
                         }
 
                         CallLookup.forgetMe();
                     }, "Delegator");
                     delegator.setDaemon(true);
                     delegator.start();
-                }
-                else if (remoteMessage instanceof RemoteReturn) {
+                } else if (remoteMessage instanceof RemoteReturn) {
                     RemoteReturn remoteReturn = (RemoteReturn) remoteMessage;
                     synchronized (remoteReturns) {
                         remoteReturns.add(remoteReturn);
                         remoteReturns.notifyAll();
                     }
-                }
-                else
+                } else
                     throw new LipeRMIException("Unknown IRemoteMessage type");
+
             }
         } catch (Exception e) {
             try {
+                log.error("ConnectionHandler exception. Closing tcpStream!", e);
                 tcpStream.close();
             } catch (IOException ex) {
-                log.warn( "error closing tcpStream: {}", ex.getMessage() );
+                log.warn("error closing tcpStream: {}", ex.getMessage());
             }
 
             synchronized (remoteReturns) {
@@ -198,8 +199,7 @@ public class ConnectionHandler implements Runnable {
                 else {
                     try {
                         remoteReturns.wait();
-                    }
-                    catch (InterruptedException ie) {
+                    } catch (InterruptedException ie) {
                         log.warn("wait for remote return iterrupted!");
                         break;
                     }
@@ -233,7 +233,7 @@ public class ConnectionHandler implements Runnable {
             try {
                 proxy = CallProxy.buildProxy(remoteInstance, this);
             } catch (ClassNotFoundException e) {
-                log.error( "buildProxy error", e);
+                log.error("buildProxy error", e);
             }
             remoteInstanceProxys.put(remoteInstance, proxy);
         }
