@@ -17,6 +17,7 @@ import net.sf.lipermi.handler.filter.IProtocolFilter;
 import net.sf.lipermi.net.BaseClient;
 
 import static java.lang.String.format;
+import static java.util.Optional.empty;
 
 
 /**
@@ -165,9 +166,9 @@ public class ConnectionHandler implements Runnable {
     final synchronized Object remoteInvocation(final Object proxy, final Method method, final Object[] args) throws Throwable {
         final Long id = callId.getAndIncrement();
 
-        RemoteInstance remoteInstance = getRemoteInstanceFromProxy(proxy);
-        if (remoteInstance == null)
-            remoteInstance = new RemoteInstance(null, proxy.getClass().getInterfaces()[0].getName());
+        final RemoteInstance remoteInstance =
+                getRemoteInstanceFromProxy(proxy)
+                        .orElseGet( () -> new RemoteInstance(null, proxy.getClass().getInterfaces()[0].getName()) );
 
         if (args != null) {
             for (int n = 0; n < args.length; n++) {
@@ -178,6 +179,7 @@ public class ConnectionHandler implements Runnable {
         }
 
         final String methodId = method.toString().substring(15);
+
         final IRemoteMessage remoteCall = new RemoteCall(remoteInstance, methodId, args, id);
 
         sendMessage(remoteCall);
@@ -209,7 +211,7 @@ public class ConnectionHandler implements Runnable {
         while (tcpStream.isConnected() && !bReturned);
 
         if (!tcpStream.isConnected() && !bReturned)
-            throw new LipeRMIException("Connection aborted"); //$NON-NLS-1$
+            throw new LipeRMIException("Connection aborted");
 
         if (remoteReturn.isThrowing() && remoteReturn.getRet() instanceof Throwable)
             throw ((Throwable) remoteReturn.getRet()).getCause();
@@ -240,13 +242,13 @@ public class ConnectionHandler implements Runnable {
         return proxy;
     }
 
-    private RemoteInstance getRemoteInstanceFromProxy(Object proxy) {
+    private Optional<RemoteInstance> getRemoteInstanceFromProxy(Object proxy) {
         for (RemoteInstance remoteInstance : remoteInstanceProxys.keySet()) {
             if (remoteInstanceProxys.get(remoteInstance) == proxy)
-                return remoteInstance;
+                return Optional.of(remoteInstance);
         }
 
-        return null;
+        return empty();
     }
 
     public CallHandler getCallHandler() {
