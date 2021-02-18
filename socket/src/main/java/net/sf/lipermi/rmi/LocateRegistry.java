@@ -18,8 +18,8 @@ public final class LocateRegistry {
   private static final org.slf4j.Logger log = org.slf4j.LoggerFactory.getLogger(LocateRegistry.class);
 
   static class RegistryImpl implements Registry {
-    private Optional<Client> lazyClient = empty();
-    private Optional<Server> lazyServer = empty();
+    private Client _client = null;
+    private Server _server = null;
 
     private Optional<String> host = empty();
     private final int port;
@@ -37,13 +37,11 @@ public final class LocateRegistry {
     public void bind(Class<?> ifc, Object obj) throws LipeRMIException {
       log.trace( "bind {}", ifc.getName());
 
-      if(!lazyServer.isPresent()) {
+      if(_server==null) {
 
         try {
-          final Server server = new Server();
-          server.bind( port, UnicastRemoteObject.callHandler, empty() );
-
-          lazyServer = Optional.of(server);
+          _server = new Server();
+          _server.bind( port, UnicastRemoteObject.callHandler, empty() );
 
         } catch (IOException ex) {
           log.error( "new Server error", ex );
@@ -59,7 +57,7 @@ public final class LocateRegistry {
       log.trace( "lookup {}", ifc.getName());
 
       // WE ARE ON THE SERVER
-      if( lazyServer.isPresent() ) {
+      if( _server!=null ) {
 
         return UnicastRemoteObject.callHandler.getExportedObject(ifc)
                 .orElseThrow( () ->
@@ -69,25 +67,25 @@ public final class LocateRegistry {
       // WE ARE ON THE CLIENT
       if( !host.isPresent() ) throw new IllegalStateException("host has not been set!");
 
-      if( !lazyClient.isPresent() ) {
+      if( _client==null ) {
 
         try {
 
-          final Client client = new Client(host.get(), port, UnicastRemoteObject.callHandler, new DefaultFilter());
-          lazyClient = Optional.of(client);
+          _client = new Client(host.get(), port, UnicastRemoteObject.callHandler, new DefaultFilter());
 
         } catch (IOException ex) {
           log.error( "new Client error", ex );
           throw new LipeRMIException(ex);
         }
       }
-      return lazyClient.get().getGlobal(ifc);
+
+      return _client.getGlobal(ifc);
     }
 
     @Override
     public String[] list() throws LipeRMIException {
 
-      if( lazyServer.isPresent() || lazyClient.isPresent() ) {
+      if( _server!=null || _client!=null ) {
         return UnicastRemoteObject.callHandler.getExportedObjects()
                 .stream()
                 .map( ri -> ri.getClassName())
@@ -98,8 +96,7 @@ public final class LocateRegistry {
 
   }
 
-  private static Optional<RegistryImpl> lazySingletonRegistry = empty();
-
+  private static RegistryImpl _singletonRegistry = null;
 
   /**
    *
@@ -109,11 +106,10 @@ public final class LocateRegistry {
   public static Registry createRegistry(int port) throws LipeRMIException {
     log.trace( "createRegistry( port:{} )", port);
 
-    if( !lazySingletonRegistry.isPresent() ) {
-      final RegistryImpl reg = new RegistryImpl(port);
-      lazySingletonRegistry = Optional.of( reg );
+    if( _singletonRegistry==null ) {
+      _singletonRegistry = new RegistryImpl(port);
     }
-    return lazySingletonRegistry.get();
+    return _singletonRegistry;
   }
 
   /**
@@ -127,11 +123,10 @@ public final class LocateRegistry {
 
     try {
 
-      if( !lazySingletonRegistry.isPresent() ) {
-        final RegistryImpl reg = new RegistryImpl(host, port);
-        lazySingletonRegistry = Optional.of( reg );
+      if( _singletonRegistry==null ) {
+        _singletonRegistry= new RegistryImpl(host, port);
       }
-      return lazySingletonRegistry.get();
+      return _singletonRegistry;
     }
     catch( Exception ex ) {
       log.error( "getRegistry error", ex );
