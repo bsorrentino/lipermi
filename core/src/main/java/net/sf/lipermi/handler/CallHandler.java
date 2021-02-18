@@ -27,6 +27,7 @@ import static java.lang.String.format;
  * @see       net.sf.lipermi.call.RemoteInstance
  */
 public class CallHandler {
+    private static final org.slf4j.Logger log = org.slf4j.LoggerFactory.getLogger(CallHandler.class);
 
     private Map<RemoteInstance, Object> exportedObjects = new HashMap<RemoteInstance, Object>();
 
@@ -43,6 +44,9 @@ public class CallHandler {
     }
 
     private void exportObject(Class<?> cInterface, Object objImplementation, String instanceId) throws LipeRMIException {
+
+        log.trace( "exportObject( class:{}, impl:{}, id:{}", cInterface,objImplementation,instanceId );
+
         if (!cInterface.isAssignableFrom(objImplementation.getClass()))
             throw new LipeRMIException(format("Class %s is not assignable from %s", objImplementation.getClass().getName(), cInterface.getName())); //$NON-NLS-1$
 
@@ -52,7 +56,7 @@ public class CallHandler {
             }
         }
 
-        RemoteInstance remoteInstance = new RemoteInstance(instanceId, cInterface.getName());
+        final RemoteInstance remoteInstance = new RemoteInstance(instanceId, cInterface.getName());
         exportedObjects.put(remoteInstance, objImplementation);
     }
 

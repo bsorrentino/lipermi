@@ -2,9 +2,7 @@ package net.sf.lipermi.rmi;
 
 import net.sf.lipermi.handler.CallHandler;
 
-import java.io.Serializable;
-
-public class UnicastRemoteObject implements Serializable  {
+public class UnicastRemoteObject {
   private static final org.slf4j.Logger log = org.slf4j.LoggerFactory.getLogger(UnicastRemoteObject.class);
 
   static final CallHandler callHandler = new CallHandler();

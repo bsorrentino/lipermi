@@ -3,6 +3,7 @@ package net.sf.lipermi.rmi;
 import net.sf.lipermi.Client;
 import net.sf.lipermi.Server;
 import net.sf.lipermi.exception.LipeRMIException;
+import net.sf.lipermi.handler.filter.DefaultFilter;
 
 import java.io.IOException;
 import java.util.Optional;
@@ -72,7 +73,7 @@ public final class LocateRegistry {
 
         try {
 
-          final Client client = new Client(host.get(), port, UnicastRemoteObject.callHandler, empty());
+          final Client client = new Client(host.get(), port, UnicastRemoteObject.callHandler, new DefaultFilter());
           lazyClient = Optional.of(client);
 
         } catch (IOException ex) {

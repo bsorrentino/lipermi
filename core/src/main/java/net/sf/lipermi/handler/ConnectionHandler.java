@@ -84,12 +84,13 @@ public class ConnectionHandler implements Runnable {
     }
 
     public void run() {
-        ObjectInputStream input;
-
-        try {
-            input = new ObjectInputStream(tcpStream.getInputStream());
+        try (
+                final ObjectInputStream input = new ObjectInputStream(tcpStream.getInputStream())
+        )
+        {
 
             while (tcpStream.isConnected()) {
+
                 final Object objFromStream = input.readUnshared();
 
                 final IRemoteMessage remoteMessage = filter.readObject(objFromStream);
@@ -136,7 +137,11 @@ public class ConnectionHandler implements Runnable {
                     throw new LipeRMIException("Unknown IRemoteMessage type");
 
             }
-        } catch (Exception e) {
+        }
+        catch( java.io.EOFException eof ) {
+            log.warn("ConnectionHandler EOFException!");
+        }
+        catch (Exception e) {
             try {
                 log.error("ConnectionHandler exception. Closing tcpStream!", e);
                 tcpStream.close();

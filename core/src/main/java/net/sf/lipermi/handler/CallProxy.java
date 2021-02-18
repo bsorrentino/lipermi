@@ -7,6 +7,7 @@ import java.lang.reflect.Method;
 import java.lang.reflect.Proxy;
 import java.util.Arrays;
 
+import static java.util.Optional.ofNullable;
 import static java.util.stream.Collectors.joining;
 
 /**
@@ -40,7 +41,11 @@ public class CallProxy implements InvocationHandler  {
         if( log.isTraceEnabled()) {
             final Class<?> ifc[] = proxy.getClass().getInterfaces();
             final Class<?>  clazz = ( ifc!=null && ifc.length > 0 ) ? ifc[0] :proxy.getClass();
-            final String argsType = Arrays.stream(args).map( String::valueOf).collect(joining(","));
+
+            final String argsType = ofNullable(args).map(a ->
+                    Arrays.stream(a).map( String::valueOf).collect(joining(",")))
+                    .orElse("null");
+
             log.trace( "invoke on instance of {} method:{} ( {} )",
                     clazz.getName(),
                     method.getName(),

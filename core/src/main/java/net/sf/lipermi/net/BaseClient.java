@@ -22,21 +22,18 @@
 
 package net.sf.lipermi.net;
 
+import net.sf.lipermi.TCPFullDuplexStream;
+import net.sf.lipermi.handler.CallHandler;
+import net.sf.lipermi.handler.CallProxy;
+import net.sf.lipermi.handler.ConnectionHandler;
+import net.sf.lipermi.handler.IConnectionHandlerListener;
+import net.sf.lipermi.handler.filter.IProtocolFilter;
+
 import java.io.Closeable;
 import java.io.IOException;
 import java.lang.reflect.Proxy;
 import java.util.LinkedList;
 import java.util.List;
-import java.util.Optional;
-
-import net.sf.lipermi.TCPFullDuplexStream;
-import net.sf.lipermi.exception.LipeRMIException;
-import net.sf.lipermi.handler.CallHandler;
-import net.sf.lipermi.handler.CallProxy;
-import net.sf.lipermi.handler.ConnectionHandler;
-import net.sf.lipermi.handler.IConnectionHandlerListener;
-import net.sf.lipermi.handler.filter.DefaultFilter;
-import net.sf.lipermi.handler.filter.IProtocolFilter;
 
 
 /**
@@ -62,7 +59,7 @@ public class BaseClient implements Closeable {
             for (IClientListener listener : listeners)
                 listener.disconnected();
     };
-    protected BaseClient(TCPFullDuplexStream stream, CallHandler callHandler, Optional<IProtocolFilter> filter) {
+    protected BaseClient(TCPFullDuplexStream stream, CallHandler callHandler, IProtocolFilter filter) {
         if( stream == null ) throw new IllegalArgumentException("stream argument is null!");
         if( callHandler == null ) throw new IllegalArgumentException("callHandler argument is null!");
         if( filter == null ) throw new IllegalArgumentException("filter argument is null!");
@@ -71,7 +68,7 @@ public class BaseClient implements Closeable {
         connectionHandler =
             ConnectionHandler.of(   stream,
                                     callHandler,
-                                    filter.orElseGet(DefaultFilter::new),
+                                    filter,
                                     connectionHandlerListener);
     }
 

@@ -6,7 +6,6 @@ import net.sf.lipermi.net.BaseClient;
 
 import java.io.IOException;
 import java.net.Socket;
-import java.util.Optional;
 
 
 /**
@@ -23,7 +22,7 @@ import java.util.Optional;
  */
 public class Client extends BaseClient {
 
-    public Client(String address, int port, CallHandler callHandler, Optional<IProtocolFilter> filter) throws IOException {
+    public Client(String address, int port, CallHandler callHandler, IProtocolFilter filter) throws IOException {
         super(new FullDuplexSocketStreamAdapter(new Socket( address, port )), callHandler, filter);
     }
 
