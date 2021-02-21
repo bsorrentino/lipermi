@@ -38,6 +38,7 @@ public class CallProxy implements InvocationHandler  {
      * Delegates call to this proxy to it's ConnectionHandler
      */
     public Object invoke(Object proxy, Method method, Object[] args) throws Throwable {
+
         if( log.isTraceEnabled()) {
             final Class<?> ifc[] = proxy.getClass().getInterfaces();
             final Class<?>  clazz = ( ifc!=null && ifc.length > 0 ) ? ifc[0] :proxy.getClass();
@@ -51,7 +52,13 @@ public class CallProxy implements InvocationHandler  {
                     method.getName(),
                     argsType
             );
-
+        }
+        // GUARD CODE
+        if( method.getName().equals("hashCode")) {
+            throw new IllegalAccessException("'hashCode' is not valid invocation on remote proxy");
+        }
+        else if( method.getName().equals("toString")) {
+            throw new IllegalAccessException("'toString' is not valid invocation on remote proxy");
         }
         return connectionHandler.remoteInvocation(proxy, method, args);
     }

@@ -1,6 +1,7 @@
 package net.sf.lipermi.rmi;
 
 import net.sf.lipermi.Client;
+import net.sf.lipermi.exception.LipeRMIException;
 import net.sf.lipermi.handler.CallHandler;
 
 import java.util.Optional;
@@ -14,12 +15,30 @@ public class UnicastRemoteObject {
 
   private static Client _client = null;
 
+  /**
+   *
+   * @return
+   */
   public static Optional<Client> getClient() {
     return ofNullable(_client);
   }
 
+  /**
+   *
+   * @param client
+   */
   static void setClient(Client client) {
     _client = client;
+  }
+
+  /**
+   *
+   * @param cInterface
+   * @param objImplementation
+   * @throws LipeRMIException
+   */
+  public static void registerGlobal(Class cInterface, Object objImplementation) throws LipeRMIException {
+    callHandler.registerGlobal(cInterface,objImplementation);
   }
 
   /**

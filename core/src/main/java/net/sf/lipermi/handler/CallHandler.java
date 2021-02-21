@@ -10,6 +10,7 @@ import java.lang.reflect.Method;
 import java.util.*;
 
 import static java.lang.String.format;
+import static java.util.Optional.empty;
 
 
 /**
@@ -27,32 +28,95 @@ import static java.lang.String.format;
  * @see       net.sf.lipermi.call.RemoteInstance
  */
 public class CallHandler {
+
     private static final org.slf4j.Logger log = org.slf4j.LoggerFactory.getLogger(CallHandler.class);
 
     private Map<RemoteInstance, Object> exportedObjects = new HashMap<RemoteInstance, Object>();
 
+    /**
+     *
+     * @param objects
+     * @return
+     */
+    public static Class<?>[] typeFromObjects(Object[] objects) {
+        Class<?>[] argClasses = null;
+        if (objects != null) {
+            argClasses = new Class[objects.length];
+            for (int n = 0; n < objects.length; n++) {
+                Object obj = objects[n];
+                argClasses[n++] = obj.getClass();
+            }
+        }
+        return argClasses;
+    }
+
+    /**
+     *
+     * @param object
+     * @return
+     */
+    public static Optional<Class<?>> getInterface( Object object ) {
+        Objects.requireNonNull(object, "object arguments is null!");
+
+        return getInterface( object.getClass() );
+    }
+
+    /**
+     *
+     * @param clazz
+     * @return
+     */
+    public static Optional<Class<?>> getInterface( Class<?> clazz ) {
+        Objects.requireNonNull(clazz, "clazz arguments is null!");
+
+        if( clazz.isInterface() ) return Optional.of(clazz);
+
+        final Class<?> interfaces[] = clazz.getInterfaces();
+
+        if( interfaces == null || interfaces.length == 0 ) {
+
+            final Class<?> superclass = clazz.getSuperclass();
+
+            if( superclass == null ) return empty();
+
+            return getInterface( superclass.getClass() );
+        }
+
+        return Optional.of(interfaces[0]);
+
+    }
 
     public void registerGlobal(Class cInterface, Object objImplementation) throws LipeRMIException {
         exportObject(cInterface, objImplementation, null);
     }
 
     public void exportObject(Class<?> cInterface, Object exportedObject) throws LipeRMIException {
-        UUID objUUID = java.util.UUID.randomUUID();
-        String instanceId = objUUID.toString();
+        final String instanceId = java.util.UUID.randomUUID().toString();
 
         exportObject(cInterface, exportedObject, instanceId);
     }
 
-    private void exportObject(Class<?> cInterface, Object objImplementation, String instanceId) throws LipeRMIException {
+    private void exportObject(Class<?> clazz, Object objImplementation, String instanceId) throws LipeRMIException {
+
+        final Class<?> cInterface = getInterface(clazz)
+                .orElseThrow( () -> new LipeRMIException( format("No valid interface found for class %s", clazz) ) );
 
         log.trace( "exportObject( class:{}, impl:{}, id:{}", cInterface,objImplementation,instanceId );
 
         if (!cInterface.isAssignableFrom(objImplementation.getClass()))
-            throw new LipeRMIException(format("Class %s is not assignable from %s", objImplementation.getClass().getName(), cInterface.getName())); //$NON-NLS-1$
+            throw new LipeRMIException(format("Class %s is not assignable from %s",
+                    objImplementation.getClass().getName(),
+                    cInterface.getName()));
 
         for (RemoteInstance remoteInstance : exportedObjects.keySet()) {
-            if ((remoteInstance.getInstanceId() == instanceId || (remoteInstance.getInstanceId() != null && remoteInstance.getInstanceId().equals(instanceId))) && remoteInstance.getClassName().equals(cInterface.getName())) {
-                throw new LipeRMIException(format("Class %s already has a implementation class", cInterface.getName()));                 //$NON-NLS-1$
+
+            if ((remoteInstance.getInstanceId() == instanceId ||
+                    (remoteInstance.getInstanceId() != null &&
+                        remoteInstance.getInstanceId().equals(instanceId))) &&
+                        remoteInstance.getClassName().equals(cInterface.getName()))
+            {
+                return;
+                //throw new LipeRMIException(format("Class %s already has a implementation class", cInterface.getName()));
             }
         }
 
@@ -60,7 +124,13 @@ public class CallHandler {
         exportedObjects.put(remoteInstance, objImplementation);
     }
 
-    public RemoteReturn delegateCall(RemoteCall remoteCall) throws LipeRMIException, SecurityException, NoSuchMethodException, IllegalArgumentException, IllegalAccessException {
+    /**
+     *
+     * @param remoteCall
+     * @return
+     * @throws Exception
+     */
+    public RemoteReturn delegateCall(RemoteCall remoteCall) throws Exception {
 
         final Object implementator = exportedObjects.get(remoteCall.getRemoteInstance());
         if (implementator == null)
@@ -132,23 +202,6 @@ public class CallHandler {
                 .filter( e -> obj == e.getValue() )
                 .map( e -> e.getKey() )
                 .findFirst();
-//        for (RemoteInstance remoteInstance : exportedObjects.keySet()) {
-//            Object exportedObj = exportedObjects.get(remoteInstance);
-//            if (exportedObj == obj)
-//                return remoteInstance;
-//        }
-//        return null;
     }
 
-    public static Class<?>[] typeFromObjects(Object[] objects) {
-        Class<?>[] argClasses = null;
-        if (objects != null) {
-            argClasses = new Class[objects.length];
-            for (int n = 0; n < objects.length; n++) {
-                Object obj = objects[n];
-                argClasses[n++] = obj.getClass();
-            }
-        }
-        return argClasses;
-    }
 }
