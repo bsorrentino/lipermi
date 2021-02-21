@@ -124,6 +124,24 @@ public class CallHandler {
         exportedObjects.put(remoteInstance, objImplementation);
     }
 
+    private Optional<Method> findImplementationMethod( Class<?> cInterface, RemoteCall remoteCall ) {
+
+        log.trace( "search fo method: {}", remoteCall.getMethodId());
+        for (Method method : cInterface.getMethods()) {
+
+            String implementationMethodId = method.toString();
+            log.trace( "\tcompare with. {}",implementationMethodId );
+
+            implementationMethodId =
+                    implementationMethodId.replace(cInterface.getName(), remoteCall.getRemoteInstance().getClassName());
+
+            if (implementationMethodId.endsWith(remoteCall.getMethodId())) {
+                return  Optional.of(method);
+            }
+        }
+        return empty();
+    }
+
     /**
      *
      * @param remoteCall
@@ -136,22 +154,11 @@ public class CallHandler {
         if (implementator == null)
             throw new LipeRMIException(format("Class %s doesn't have implementation", remoteCall.getRemoteInstance().getClassName()));
 
+        final Method implementationMethod =
+                findImplementationMethod( getInterface(implementator).get(), remoteCall)
+                    .orElseThrow( () -> new NoSuchMethodException(remoteCall.getMethodId()));
+
         RemoteReturn remoteReturn;
-
-        Method implementationMethod = null;
-
-        for (Method method : implementator.getClass().getMethods()) {
-            String implementationMethodId = method.toString();
-            implementationMethodId = implementationMethodId.replace(implementator.getClass().getName(), remoteCall.getRemoteInstance().getClassName());
-
-            if (implementationMethodId.endsWith(remoteCall.getMethodId())) {
-                implementationMethod = method;
-                break;
-            }
-        }
-
-        if (implementationMethod == null)
-            throw new NoSuchMethodException(remoteCall.getMethodId());
 
         try {
 
@@ -181,15 +188,17 @@ public class CallHandler {
 
     /**
      *
-     * @param ifc
+     * @param clazz
      * @param <T>
      * @return
      */
-    public <T> Optional<T> getExportedObject(Class<T> ifc ) {
-        return exportedObjects.entrySet().stream()
-                .filter( e -> e.getKey().getClassName().equals(ifc.getName()) )
-                .map( e -> (T)e.getValue() )
-                .findFirst();
+    public <T> Optional<T> getExportedObject(Class<T> clazz ) {
+
+        return getInterface( clazz ).flatMap( ifc ->
+                    exportedObjects.entrySet().stream()
+                        .filter( e -> e.getKey().getClassName().equals(ifc.getName()) )
+                        .map( e -> (T)e.getValue() )
+                        .findFirst());
     }
 
     /**
