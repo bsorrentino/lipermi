@@ -73,6 +73,8 @@ public final class LocateRegistry {
 
           _client = new Client(host.get(), port, UnicastRemoteObject.callHandler, new DefaultFilter());
 
+          UnicastRemoteObject.setClient(_client);
+          
         } catch (IOException ex) {
           log.error( "new Client error", ex );
           throw new LipeRMIException(ex);

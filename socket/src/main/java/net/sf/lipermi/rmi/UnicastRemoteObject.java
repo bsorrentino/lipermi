@@ -1,13 +1,26 @@
 package net.sf.lipermi.rmi;
 
+import net.sf.lipermi.Client;
 import net.sf.lipermi.handler.CallHandler;
 
 import java.util.Optional;
+
+import static java.util.Optional.ofNullable;
 
 public class UnicastRemoteObject {
   private static final org.slf4j.Logger log = org.slf4j.LoggerFactory.getLogger(UnicastRemoteObject.class);
 
   static final CallHandler callHandler = new CallHandler();
+
+  private static Client _client = null;
+
+  public static Optional<Client> getClient() {
+    return ofNullable(_client);
+  }
+
+  static void setClient(Client client) {
+    _client = client;
+  }
 
   /**
    *
