@@ -68,6 +68,7 @@ public class CallHandler {
      */
     public static Optional<Class<?>> getInterface( Class<?> clazz ) {
         Objects.requireNonNull(clazz, "clazz arguments is null!");
+        log.trace( "get interface for class {}", clazz);
 
         if( clazz.isInterface() ) return Optional.of(clazz);
 
@@ -79,7 +80,7 @@ public class CallHandler {
 
             if( superclass == null ) return empty();
 
-            return getInterface( superclass.getClass() );
+            return getInterface( superclass );
         }
 
         return Optional.of(interfaces[0]);
@@ -126,7 +127,7 @@ public class CallHandler {
 
     private Optional<Method> findImplementationMethod( Class<?> cInterface, RemoteCall remoteCall ) {
 
-        log.trace( "search fo method: {}", remoteCall.getMethodId());
+        log.trace( "search fo method: {} - {}", remoteCall.getMethodId(), cInterface);
         for (Method method : cInterface.getMethods()) {
 
             String implementationMethodId = method.toString();
@@ -155,8 +156,8 @@ public class CallHandler {
             throw new LipeRMIException(format("Class %s doesn't have implementation", remoteCall.getRemoteInstance().getClassName()));
 
         final Method implementationMethod =
-                findImplementationMethod( getInterface(implementator).get(), remoteCall)
-                    .orElseThrow( () -> new NoSuchMethodException(remoteCall.getMethodId()));
+                getInterface(implementator).flatMap( ifc -> findImplementationMethod(ifc, remoteCall))
+                        .orElseThrow( () -> new NoSuchMethodException(remoteCall.getMethodId()));
 
         RemoteReturn remoteReturn;
 
