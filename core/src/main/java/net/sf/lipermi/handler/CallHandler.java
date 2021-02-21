@@ -131,7 +131,7 @@ public class CallHandler {
         for (Method method : cInterface.getMethods()) {
 
             String implementationMethodId = method.toString();
-            log.trace( "\tcompare with. {}",implementationMethodId );
+            //log.trace( "\tcompare with. {}",implementationMethodId );
 
             implementationMethodId =
                     implementationMethodId.replace(cInterface.getName(), remoteCall.getRemoteInstance().getClassName());
