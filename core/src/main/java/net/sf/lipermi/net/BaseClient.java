@@ -35,6 +35,8 @@ import java.lang.reflect.Proxy;
 import java.util.LinkedList;
 import java.util.List;
 
+import static java.lang.String.format;
+
 
 /**
  * The LipeRMI client.
@@ -80,10 +82,18 @@ public class BaseClient implements Closeable {
         listeners.remove(listener);
     }
 
+    /**
+     *
+     * @param clazz
+     * @param <T>
+     * @return
+     */
     public <T> T getGlobal(Class<T> clazz) {
-        return (T)Proxy.newProxyInstance(clazz.getClassLoader(),
-                                new Class[] { clazz },
-                                new CallProxy(connectionHandler));
+        return CallHandler.getInterface( clazz ).map( ifc ->
+                    (T)Proxy.newProxyInstance(clazz.getClassLoader(),
+                                new Class[] { ifc },
+                                new CallProxy(connectionHandler)) )
+                .orElseThrow( () -> new IllegalArgumentException(format("class %s is not a valid interface", clazz)));
     }
 
     public void close() throws IOException {
