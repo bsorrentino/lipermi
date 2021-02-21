@@ -116,7 +116,7 @@ public class ConnectionHandler implements Runnable {
                             log.trace("remoteCall: {} - {}", remoteCall.getCallId(), remoteCall.getRemoteInstance().getInstanceId());
                             final RemoteReturn remoteReturn = callHandler.delegateCall(remoteCall);
 
-                            log.trace("({})={}", remoteCall.getCallId(), remoteReturn.getRet());
+                            log.trace("remote return {} = {}", remoteCall.getCallId(), remoteReturn.getRet());
                             sendMessage(remoteReturn);
 
                         } catch (Exception e) {
@@ -205,7 +205,9 @@ public class ConnectionHandler implements Runnable {
                     remoteReturns.remove(remoteReturn);
                 else {
                     try {
-                        remoteReturns.wait();
+                        log.trace( "wait for remote return");
+                        remoteReturns.wait( );
+                        log.trace( "got remote return");
                     } catch (InterruptedException ie) {
                         log.warn("wait for remote return iterrupted!");
                         break;

@@ -73,6 +73,8 @@ public class CallProxy implements InvocationHandler  {
      * @throws ClassNotFoundException
      */
     public static Object buildProxy(RemoteInstance remoteInstance, ConnectionHandler connectionHandler) throws ClassNotFoundException {
+        log.trace( "buildProxy for remote instance {}", remoteInstance.getClassName());
+
         Class<?> clazz = Class.forName(remoteInstance.getClassName());
         return Proxy.newProxyInstance(clazz.getClassLoader(), new Class[] { clazz }, new CallProxy(connectionHandler));
     }
