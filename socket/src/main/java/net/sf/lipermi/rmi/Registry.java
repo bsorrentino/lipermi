@@ -1,14 +1,12 @@
 package net.sf.lipermi.rmi;
 
-import net.sf.lipermi.exception.LipeRMIException;
-
 public interface Registry {
 
-  void bind(Class<?> ifc, Object obj) throws LipeRMIException;
+  void bind(Class<?> ifc, Object obj) throws Exception;
 
-  <T> T lookup(Class<T> ifc) throws LipeRMIException;
+  <T> T lookup(Class<T> ifc) throws Exception;
 
-  default void rebind( Class<?> ifc, Object obj ) throws LipeRMIException {
+  default void rebind( Class<?> ifc, Object obj ) throws Exception {
     bind( ifc, obj );
   }
 
@@ -16,6 +14,6 @@ public interface Registry {
     throw new UnsupportedOperationException("unbind is not supported yet!");
   }
 
-  String[] list() throws LipeRMIException;
+  String[] list() throws Exception;
 
 }
