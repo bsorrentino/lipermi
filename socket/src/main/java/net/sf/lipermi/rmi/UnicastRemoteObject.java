@@ -17,7 +17,7 @@ public class UnicastRemoteObject {
    * @param objImplementation
    * @throws LipeRMIException
    */
-  public static void registerGlobal(Class cInterface, Object objImplementation) throws LipeRMIException {
+  public static void registerGlobal(Class cInterface, Object objImplementation) throws Exception {
     callHandler.registerGlobal(cInterface,objImplementation);
   }
 
