@@ -67,15 +67,14 @@ public class Server {
 
                     final FullDuplexSocketStreamAdapter socketAdapter =
                             new FullDuplexSocketStreamAdapter(acceptSocket);
-                    ConnectionHandler.of(   socketAdapter,
+
+                    ConnectionHandler.start(   socketAdapter,
                                             callHandler,
-                                            filter.orElseGet(DefaultFilter::new),
-                                            () -> {
-                                                for (IServerListener listener : listeners)
-                                                    listener.clientDisconnected(socketAdapter.getSocket());
-                                            });
+                                            filter.orElseGet(DefaultFilter::new));
+
                     for (IServerListener listener : listeners)
                         listener.clientConnected(socketAdapter.getSocket());
+                    
                 } catch (IOException e) {
                     log.warn("bindThread error", e);
                 }

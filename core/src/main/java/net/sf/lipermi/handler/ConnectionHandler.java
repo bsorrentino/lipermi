@@ -36,7 +36,7 @@ import static java.util.Optional.empty;
 public class ConnectionHandler implements Runnable {
     private static final org.slf4j.Logger log = org.slf4j.LoggerFactory.getLogger(ConnectionHandler.class);
 
-    public static ConnectionHandler of(TCPFullDuplexStream socket, CallHandler callHandler, IProtocolFilter filter) {
+    public static ConnectionHandler start(TCPFullDuplexStream socket, CallHandler callHandler, IProtocolFilter filter) {
         ConnectionHandler connectionHandler = new ConnectionHandler(socket, callHandler, filter);
 
         String threadName = format("ConnectionHandler (%s:%d)", socket.getInetAddress().getHostAddress(), socket.getPort());
@@ -47,35 +47,19 @@ public class ConnectionHandler implements Runnable {
         return connectionHandler;
     }
 
-    public static ConnectionHandler of(TCPFullDuplexStream socket, CallHandler callHandler, IProtocolFilter filter, IConnectionHandlerListener listener) {
-        ConnectionHandler connectionHandler = of(socket, callHandler, filter);
-        connectionHandler.addConnectionHandlerListener(listener);
-        return connectionHandler;
-    }
+    private final TCPFullDuplexStream tcpStream;
 
     private final CallHandler callHandler;
 
-    private TCPFullDuplexStream tcpStream;
+    private final IProtocolFilter filter;
 
     private ObjectOutputStream output;
 
     private static AtomicLong callId = new AtomicLong(0L);
 
-    private IProtocolFilter filter;
+    private final Map<RemoteInstance, Object> remoteInstanceProxys = new HashMap<>();
 
-    private List<IConnectionHandlerListener> listeners = new LinkedList<IConnectionHandlerListener>();
-
-    private Map<RemoteInstance, Object> remoteInstanceProxys = new HashMap<RemoteInstance, Object>();
-
-    private List<RemoteReturn> remoteReturns = new LinkedList<RemoteReturn>();
-
-    public void addConnectionHandlerListener(IConnectionHandlerListener listener) {
-        listeners.add(listener);
-    }
-
-    public void removeConnectionHandlerListener(IConnectionHandlerListener listener) {
-        listeners.remove(listener);
-    }
+    private final List<RemoteReturn> remoteReturns = new LinkedList<>();
 
     private ConnectionHandler(TCPFullDuplexStream socket, CallHandler callHandler, IProtocolFilter filter) {
         this.callHandler = callHandler;
@@ -83,6 +67,7 @@ public class ConnectionHandler implements Runnable {
         this.filter = filter;
     }
 
+    @Override
     public void run() {
         try (
                 final ObjectInputStream input = new ObjectInputStream(tcpStream.getInputStream())
@@ -152,9 +137,6 @@ public class ConnectionHandler implements Runnable {
             synchronized (remoteReturns) {
                 remoteReturns.notifyAll();
             }
-
-            for (IConnectionHandlerListener listener : listeners)
-                listener.connectionClosed();
         }
     }
 
@@ -171,7 +153,7 @@ public class ConnectionHandler implements Runnable {
     }
 
     final Object remoteInvocation(final Object proxy, final Method method, final Object[] args) throws Throwable {
-        final Long id = callId.getAndIncrement();
+        final long id = callId.getAndIncrement();
 
         final RemoteInstance remoteInstance =
                 getRemoteInstanceFromProxy(proxy)

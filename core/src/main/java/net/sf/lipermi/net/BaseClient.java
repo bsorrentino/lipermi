@@ -45,10 +45,9 @@ public class BaseClient implements Closeable {
 
         TCPStream = stream;
         connectionHandler =
-            ConnectionHandler.of(   stream,
+            ConnectionHandler.start(   stream,
                                     callHandler,
-                                    filter,
-                                    connectionHandlerListener);
+                                    filter);
     }
 
     public void addClientListener(IClientListener listener) {
