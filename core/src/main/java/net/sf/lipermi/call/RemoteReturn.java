@@ -23,7 +23,7 @@ public class RemoteReturn implements IRemoteMessage {
     /**
      * Call id which generated this return
      */
-    Long callId;
+    long callId;
 
     public Long getCallId() {
         return callId;
@@ -37,7 +37,7 @@ public class RemoteReturn implements IRemoteMessage {
         return throwing;
     }
 
-    public RemoteReturn(boolean throwing, Object ret, Long callId) {
+    public RemoteReturn(boolean throwing, Object ret, long callId) {
         this.throwing = throwing;
         this.ret = ret;
         this.callId = callId;
