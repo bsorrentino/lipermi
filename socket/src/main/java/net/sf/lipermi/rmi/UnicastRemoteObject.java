@@ -17,7 +17,7 @@ public class UnicastRemoteObject {
    * @param objImplementation
    * @throws LipeRMIException
    */
-  public static void registerGlobal(Class cInterface, Object objImplementation) throws Exception {
+  protected static void registerGlobal(Class cInterface, Object objImplementation) throws Exception {
     callHandler.registerGlobal(cInterface,objImplementation);
   }
 
@@ -38,7 +38,7 @@ public class UnicastRemoteObject {
    * @return
    * @throws Exception
    */
-  public static Object exportObject( Class<?> ifc, Object obj) throws Exception {
+  protected static Object exportObject( Class<?> ifc, Object obj) throws Exception {
     callHandler.exportObject( ifc, obj);
     return obj;
   }
@@ -49,7 +49,7 @@ public class UnicastRemoteObject {
    * @param force
    * @return
    */
-  public static boolean	unexportObject(Object obj, boolean force)  {
+  protected static boolean	unexportObject(Object obj, boolean force)  {
     log.warn( "unexportObject( obj:{}, force:{} ) is not implemented yet!", obj, force);
     return true;
     //throw new UnsupportedOperationException("unexportObject is not implemented yet!");

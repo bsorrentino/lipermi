@@ -10,8 +10,9 @@ public interface Registry {
     bind( ifc, obj );
   }
 
-  default void unbind(Class<?> ifc) {
-    throw new UnsupportedOperationException("unbind is not supported yet!");
+  default void unbind(Object object) {
+    UnicastRemoteObject.unexportObject(object, true );
+    //throw new UnsupportedOperationException("unbind is not supported yet!");
   }
 
   String[] list() throws Exception;

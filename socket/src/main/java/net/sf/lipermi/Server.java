@@ -74,7 +74,7 @@ public class Server {
 
                     for (IServerListener listener : listeners)
                         listener.clientConnected(socketAdapter.getSocket());
-                    
+
                 } catch (IOException e) {
                     log.warn("bindThread error", e);
                 }
