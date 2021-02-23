@@ -159,13 +159,15 @@ public class ConnectionHandler implements Runnable {
     }
 
     private void sendMessage(IRemoteMessage remoteMessage) throws IOException {
-        if (output == null)
-            output = new ObjectOutputStream(tcpStream.getOutputStream());
+        synchronized (tcpStream) {
+            if (output == null)
+                output = new ObjectOutputStream(tcpStream.getOutputStream());
 
-        final Object objToWrite = filter.prepareWrite(remoteMessage);
-        output.reset();
-        output.writeUnshared(objToWrite);
-        output.flush();
+            final Object objToWrite = filter.prepareWrite(remoteMessage);
+            output.reset();
+            output.writeUnshared(objToWrite);
+            output.flush();
+        }
     }
 
     final Object remoteInvocation(final Object proxy, final Method method, final Object[] args) throws Throwable {
