@@ -4,15 +4,15 @@ import java.io.IOException;
 import java.net.InetSocketAddress;
 import java.net.ServerSocket;
 import java.net.Socket;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Optional;
 
 import net.sf.lipermi.handler.CallHandler;
 import net.sf.lipermi.handler.ConnectionHandler;
 import net.sf.lipermi.handler.filter.DefaultFilter;
 import net.sf.lipermi.handler.filter.IProtocolFilter;
 import net.sf.lipermi.net.BaseClient;
+import net.sf.lipermi.net.IServer;
+
+import static java.util.Optional.ofNullable;
 
 
 /**
@@ -27,28 +27,20 @@ import net.sf.lipermi.net.BaseClient;
  * @see    net.sf.lipermi.handler.CallHandler
  * @see    BaseClient
  */
-public class Server {
-    private static final org.slf4j.Logger log = org.slf4j.LoggerFactory.getLogger(Server.class);
+public class SocketServer implements IServer {
+    private static final org.slf4j.Logger log = org.slf4j.LoggerFactory.getLogger(SocketServer.class);
 
     private ServerSocket serverSocket;
 
     private boolean enabled;
 
-    private List<IServerListener> listeners = new LinkedList<IServerListener>();
-
-    public void addServerListener(IServerListener listener) {
-        listeners.add(listener);
-    }
-
-    public void removeServerListener(IServerListener listener) {
-        listeners.remove(listener);
-    }
-
-    public void close() {
+    @Override
+    public void close() throws IOException {
         enabled = false;
     }
 
-    public int bind(int port, final CallHandler callHandler, Optional<IProtocolFilter> filter) throws IOException {
+    @Override
+    public int bind(int port, final CallHandler callHandler, IProtocolFilter filter) throws IOException {
         serverSocket = new ServerSocket();
         serverSocket.setPerformancePreferences(1, 0, 2);
         enabled = true;
@@ -70,10 +62,7 @@ public class Server {
 
                     ConnectionHandler.start(   socketAdapter,
                                             callHandler,
-                                            filter.orElseGet(DefaultFilter::new));
-
-                    for (IServerListener listener : listeners)
-                        listener.clientConnected(socketAdapter.getSocket());
+                                            ofNullable(filter).orElseGet(DefaultFilter::new));
 
                 } catch (IOException e) {
                     log.warn("bindThread error", e);

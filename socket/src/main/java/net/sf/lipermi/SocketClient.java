@@ -18,11 +18,11 @@ import java.net.Socket;
  * @date   05/10/2006
  *
  * @see    net.sf.lipermi.handler.CallHandler
- * @see    Server
+ * @see    TCPSocketServer
  */
-public class Client extends BaseClient {
+public class SocketClient extends BaseClient {
 
-    public Client(String address, int port, CallHandler callHandler, IProtocolFilter filter) throws IOException {
+    public SocketClient(String address, int port, CallHandler callHandler, IProtocolFilter filter) throws IOException {
         super(new FullDuplexSocketStreamAdapter(new Socket( address, port )), callHandler, filter);
     }
 
