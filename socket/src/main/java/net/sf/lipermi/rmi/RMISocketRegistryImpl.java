@@ -2,7 +2,6 @@ package net.sf.lipermi.rmi;
 
 import net.sf.lipermi.SocketClient;
 import net.sf.lipermi.SocketServer;
-import net.sf.lipermi.exception.LipeRMIException;
 import net.sf.lipermi.net.BaseClient;
 import net.sf.lipermi.net.IServer;
 
@@ -66,7 +65,7 @@ public class RMISocketRegistryImpl implements Registry {
 
             return UnicastRemoteObject.callHandler.getExportedObject(ifc)
                     .orElseThrow( () ->
-                            new LipeRMIException( format("exported object with interface %s not found!", ifc.getName())));
+                            new Exception( format("exported object with interface %s not found!", ifc.getName())));
         }
 
         // WE ARE ON THE CLIENT
@@ -90,7 +89,7 @@ public class RMISocketRegistryImpl implements Registry {
                     .map( ri -> ri.getClassName())
                     .toArray( String[]::new );
         }
-        throw new LipeRMIException("the registry is not connected yet!");
+        throw new Exception("the registry is not connected yet!");
     }
 
 
