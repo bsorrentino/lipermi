@@ -49,7 +49,7 @@ public class LocateRegistry {
      * @return
      */
   public static Registry createRegistry(int port) throws Exception {
-    requireNonNull("Registry provider cannot be null!");
+    requireNonNull(_registryProvider, "Registry provider cannot be null!");
     log.trace( "createRegistry( port:{} )", port);
 
     if( _singletonRegistry==null ) {

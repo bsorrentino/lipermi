@@ -36,7 +36,7 @@ public class RMISocketRegistryImpl implements Registry {
     }
 
     @Override
-    public void bind(Class<?> ifc, Object obj) throws Exception {
+    public <T, C extends T> void bind(Class<T> ifc, C obj) throws Exception {
         log.trace( "bind {}", ifc.getName());
 
         if( _client!=null ) {

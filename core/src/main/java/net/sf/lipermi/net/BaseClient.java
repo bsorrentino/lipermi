@@ -16,6 +16,7 @@ import java.util.List;
 import java.util.Optional;
 
 import static java.lang.String.format;
+import static java.util.Optional.ofNullable;
 
 /**
  * The LipeRMI client.
@@ -34,30 +35,15 @@ public class BaseClient implements Closeable {
 
     private final ConnectionHandler connectionHandler;
 
-    private final List<IClientListener> listeners = new LinkedList<IClientListener>();
-
-    private final IConnectionHandlerListener connectionHandlerListener = () -> {
-            for (IClientListener listener : listeners)
-                listener.disconnected();
-    };
-
     protected BaseClient(TCPFullDuplexStream stream, CallHandler callHandler, IProtocolFilter filter) {
         if( stream == null ) throw new IllegalArgumentException("stream argument is null!");
         if( callHandler == null ) throw new IllegalArgumentException("callHandler argument is null!");
 
         TCPStream = stream;
         connectionHandler =
-            ConnectionHandler.start(   stream,
+            ConnectionHandler.start(stream,
                                     callHandler,
-                                    Optional.ofNullable(filter).orElseGet(DefaultFilter::new));
-    }
-
-    public void addClientListener(IClientListener listener) {
-        listeners.add(listener);
-    }
-
-    public void removeClientListener(IClientListener listener) {
-        listeners.remove(listener);
+                                    ofNullable(filter).orElseGet(DefaultFilter::new));
     }
 
     /**

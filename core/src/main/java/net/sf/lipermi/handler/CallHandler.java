@@ -87,7 +87,7 @@ public class CallHandler {
 
     }
 
-    public void registerGlobal(Class cInterface, Object objImplementation) throws LipeRMIException {
+    public <T, C extends T> void registerGlobal(Class<T> cInterface, C objImplementation) throws LipeRMIException {
         exportObject(cInterface, objImplementation, null);
     }
 
