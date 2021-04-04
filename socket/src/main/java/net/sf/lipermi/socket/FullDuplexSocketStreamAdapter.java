@@ -1,4 +1,6 @@
-package net.sf.lipermi;
+package net.sf.lipermi.socket;
+
+import net.sf.lipermi.TCPFullDuplexStream;
 
 import java.io.IOException;
 import java.io.InputStream;

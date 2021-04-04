@@ -1,4 +1,4 @@
-package net.sf.lipermi;
+package net.sf.lipermi.socket;
 
 import net.sf.lipermi.handler.CallHandler;
 import net.sf.lipermi.handler.filter.IProtocolFilter;

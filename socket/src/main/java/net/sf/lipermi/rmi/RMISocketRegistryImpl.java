@@ -1,7 +1,7 @@
 package net.sf.lipermi.rmi;
 
-import net.sf.lipermi.SocketClient;
-import net.sf.lipermi.SocketServer;
+import net.sf.lipermi.socket.SocketClient;
+import net.sf.lipermi.socket.SocketServer;
 import net.sf.lipermi.handler.CallHandler;
 import net.sf.lipermi.handler.filter.IProtocolFilter;
 

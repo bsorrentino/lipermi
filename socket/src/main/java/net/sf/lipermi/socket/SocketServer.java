@@ -1,4 +1,4 @@
-package net.sf.lipermi;
+package net.sf.lipermi.socket;
 
 import java.io.IOException;
 import java.net.InetSocketAddress;
@@ -43,7 +43,7 @@ public class SocketServer implements IServer {
     public int bind(int port, final CallHandler callHandler, IProtocolFilter filter) throws IOException {
         serverSocket = new ServerSocket();
         serverSocket.setPerformancePreferences(1, 0, 2);
-        enabled = true;
+            enabled = true;
 
         if (port >= 0) {
             serverSocket.bind(new InetSocketAddress(port));

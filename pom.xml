@@ -20,6 +20,7 @@
       <module>core</module>
       <module>socket</module>
         <module>rmi-emul</module>
+        <module>socket-channel</module>
     </modules>
 
     <dependencies>
