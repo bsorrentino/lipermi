@@ -53,10 +53,10 @@ public abstract class AbstractConnectionHandler implements Closeable  {
 
   /**
    *
-   * @param runnable
+   * @param task
    */
-  protected void delegateAsync( Runnable runnable ) {
-    final Thread delegator = new Thread( runnable, "Delegator" );
+  protected void delegateCall(Runnable task ) {
+    final Thread delegator = new Thread( task, "Delegator" );
     delegator.setDaemon(true);
     delegator.start();
   }
@@ -82,7 +82,7 @@ public abstract class AbstractConnectionHandler implements Closeable  {
         }
       }
 
-      delegateAsync(() -> {
+      delegateCall(() -> {
         try {
 
           log.trace("remoteCall: {} - {}", remoteCall.getCallId(), remoteCall.getRemoteInstance().getInstanceId());

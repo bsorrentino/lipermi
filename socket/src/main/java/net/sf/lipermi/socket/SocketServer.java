@@ -52,7 +52,7 @@ public class SocketServer implements IServer {
      * @throws IOException
      */
     @Override
-    public int bind(int port, final CallHandler callHandler, IProtocolFilter filter) throws IOException {
+    public void bind(int port, final CallHandler callHandler, IProtocolFilter filter) throws IOException {
         serverSocket = new ServerSocket();
         serverSocket.setPerformancePreferences(1, 0, 2);
         enabled = true;
@@ -80,7 +80,6 @@ public class SocketServer implements IServer {
         }, format("Bind (%d)", port));
         bindThread.start();
 
-        return serverSocket.getLocalPort();
     }
 
 }

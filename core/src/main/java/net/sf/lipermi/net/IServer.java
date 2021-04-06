@@ -8,6 +8,6 @@ import java.io.IOException;
 
 public interface IServer extends Closeable {
 
-    int bind(int port, final CallHandler callHandler, IProtocolFilter filter) throws IOException;
+    void bind(int port, final CallHandler callHandler, IProtocolFilter filter) throws IOException;
 
 }
