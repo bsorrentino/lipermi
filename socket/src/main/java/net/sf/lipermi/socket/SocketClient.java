@@ -1,11 +1,15 @@
 package net.sf.lipermi.socket;
 
 import net.sf.lipermi.handler.CallHandler;
+import net.sf.lipermi.handler.filter.DefaultFilter;
 import net.sf.lipermi.handler.filter.IProtocolFilter;
-import net.sf.lipermi.net.BaseClient;
+import net.sf.lipermi.net.IClient;
+import net.sf.lipermi.socket.handler.SocketConnectionHandler;
 
 import java.io.IOException;
 import java.net.Socket;
+
+import static java.util.Optional.ofNullable;
 
 
 /**
@@ -18,12 +22,29 @@ import java.net.Socket;
  * @date   05/10/2006
  *
  * @see    net.sf.lipermi.handler.CallHandler
- * @see    TCPSocketServer
+ * @see    SocketServer
  */
-public class SocketClient extends BaseClient {
+public class SocketClient implements IClient<SocketConnectionHandler> {
+
+    final SocketConnectionHandler connectionHandler;
 
     public SocketClient(String address, int port, CallHandler callHandler, IProtocolFilter filter) throws IOException {
-        super(new FullDuplexSocketStreamAdapter(new Socket( address, port )), callHandler, filter);
+        if( callHandler == null ) throw new IllegalArgumentException("callHandler argument is null!");
+
+        connectionHandler =
+            SocketConnectionHandler.start(new Socket( address, port ),
+                callHandler,
+                ofNullable(filter).orElseGet(DefaultFilter::new));
+
     }
 
+    @Override
+    public SocketConnectionHandler getConnectionHandler() {
+        return connectionHandler;
+    }
+
+    @Override
+    public void close() throws IOException {
+        connectionHandler.close();
+    }
 }

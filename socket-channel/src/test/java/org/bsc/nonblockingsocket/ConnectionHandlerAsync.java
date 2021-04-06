@@ -1,4 +1,4 @@
-package net.sf.lipermi.socketchannel;
+package org.bsc.nonblockingsocket;
 
 public class ConnectionHandlerAsync {
 }

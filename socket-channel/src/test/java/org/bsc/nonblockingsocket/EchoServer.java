@@ -1,4 +1,4 @@
-package net.sf.lipermi.socketchannel;
+package org.bsc.nonblockingsocket;
 
 import java.io.IOException;
 import java.net.InetSocketAddress;
@@ -8,9 +8,6 @@ import java.nio.channels.ServerSocketChannel;
 import java.nio.channels.SocketChannel;
 
 public class EchoServer extends AbstractSocketChannelServerAsync<ServerSocketChannel> {
-    static {
-        System.setProperty( "org.slf4j.simpleLogger.defaultLogLevel", "TRACE" );
-    }
     private static final org.slf4j.Logger log = org.slf4j.LoggerFactory.getLogger(EchoServer.class);
 
     private static final String POISON_PILL = "POISON_PILL";

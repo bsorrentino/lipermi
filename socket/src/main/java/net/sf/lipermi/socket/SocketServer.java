@@ -1,16 +1,16 @@
 package net.sf.lipermi.socket;
 
+import net.sf.lipermi.handler.CallHandler;
+import net.sf.lipermi.handler.filter.DefaultFilter;
+import net.sf.lipermi.handler.filter.IProtocolFilter;
+import net.sf.lipermi.net.IClient;
+import net.sf.lipermi.net.IServer;
+import net.sf.lipermi.socket.handler.SocketConnectionHandler;
+
 import java.io.IOException;
 import java.net.InetSocketAddress;
 import java.net.ServerSocket;
 import java.net.Socket;
-
-import net.sf.lipermi.handler.CallHandler;
-import net.sf.lipermi.handler.ConnectionHandler;
-import net.sf.lipermi.handler.filter.DefaultFilter;
-import net.sf.lipermi.handler.filter.IProtocolFilter;
-import net.sf.lipermi.net.BaseClient;
-import net.sf.lipermi.net.IServer;
 
 import static java.util.Optional.ofNullable;
 
@@ -19,13 +19,13 @@ import static java.util.Optional.ofNullable;
  * The LipeRMI server.
  * This object listen to a specific port and
  * when a client connects it delegates the connection
- * to a {@link net.sf.lipermi.handler.ConnectionHandler ConnectionHandler}.
+ * to a {@link net.sf.lipermi.handler.AbstractConnectionHandler ConnectionHandler}.
  *
  * @author lipe
  * @date   05/10/2006
  *
  * @see    net.sf.lipermi.handler.CallHandler
- * @see    BaseClient
+ * @see    IClient
  */
 public class SocketServer implements IServer {
     private static final org.slf4j.Logger log = org.slf4j.LoggerFactory.getLogger(SocketServer.class);
@@ -57,10 +57,7 @@ public class SocketServer implements IServer {
                 try {
                     acceptSocket = serverSocket.accept();
 
-                    final FullDuplexSocketStreamAdapter socketAdapter =
-                            new FullDuplexSocketStreamAdapter(acceptSocket);
-
-                    ConnectionHandler.start(   socketAdapter,
+                    SocketConnectionHandler.start( acceptSocket,
                                             callHandler,
                                             ofNullable(filter).orElseGet(DefaultFilter::new));
 

@@ -1,4 +1,4 @@
-package net.sf.lipermi.socketchannel;
+package org.bsc.nonblockingsocket;
 
 import java.io.Closeable;
 import java.io.IOException;

@@ -19,10 +19,10 @@ import static java.util.stream.Collectors.joining;
  *
  * @see       net.sf.lipermi.handler.CallHandler
  */
-public class CallProxy implements InvocationHandler  {
+public class CallProxy<C extends AbstractConnectionHandler> implements InvocationHandler  {
     private static final org.slf4j.Logger log = org.slf4j.LoggerFactory.getLogger(CallProxy.class);
 
-    private final ConnectionHandler connectionHandler;
+    private final C connectionHandler;
 
     /**
      * Create new CallProxy with a ConnectionHandler which will
@@ -30,7 +30,7 @@ public class CallProxy implements InvocationHandler  {
      *
      * @param connectionHandler
      */
-    public CallProxy(ConnectionHandler connectionHandler) {
+    public CallProxy(C connectionHandler) {
         this.connectionHandler = connectionHandler;
     }
 
@@ -72,7 +72,7 @@ public class CallProxy implements InvocationHandler  {
      * @return dymamic proxy for RemoteInstance
      * @throws ClassNotFoundException
      */
-    public static Object buildProxy(RemoteInstance remoteInstance, ConnectionHandler connectionHandler) throws ClassNotFoundException {
+    public static <C extends AbstractConnectionHandler>  Object buildProxy(RemoteInstance remoteInstance, C connectionHandler) throws ClassNotFoundException {
         log.trace( "buildProxy for remote instance {}", remoteInstance.getClassName());
 
         final Class<?> clazz = Class.forName(remoteInstance.getClassName());
