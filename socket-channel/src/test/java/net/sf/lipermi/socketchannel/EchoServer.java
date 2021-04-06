@@ -4,9 +4,10 @@ import java.io.IOException;
 import java.net.InetSocketAddress;
 import java.nio.ByteBuffer;
 import java.nio.channels.SelectionKey;
+import java.nio.channels.ServerSocketChannel;
 import java.nio.channels.SocketChannel;
 
-public class EchoServer extends AbstractSocketChannelServer {
+public class EchoServer extends AbstractSocketChannelServerAsync<ServerSocketChannel> {
     static {
         System.setProperty( "org.slf4j.simpleLogger.defaultLogLevel", "TRACE" );
     }

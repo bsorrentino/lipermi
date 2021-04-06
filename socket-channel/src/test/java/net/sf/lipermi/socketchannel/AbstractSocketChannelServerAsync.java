@@ -6,18 +6,16 @@ import java.net.InetSocketAddress;
 import java.nio.ByteBuffer;
 import java.nio.channels.*;
 import java.util.Iterator;
-import java.util.Optional;
 import java.util.Set;
 
 import static java.nio.ByteBuffer.allocateDirect;
-import static java.util.Optional.empty;
 import static java.util.Optional.ofNullable;
 
 /**
  *
  */
-public abstract class AbstractSocketChannelServer implements Closeable {
-    private final org.slf4j.Logger log = org.slf4j.LoggerFactory.getLogger(AbstractSocketChannelServer.class);
+public abstract class AbstractSocketChannelServerAsync<C extends SelectableChannel> implements Closeable {
+    private final org.slf4j.Logger log = org.slf4j.LoggerFactory.getLogger(AbstractSocketChannelServerAsync.class);
 
     public static final byte EOT = 0x04; // End Of Transmission
 
@@ -39,11 +37,11 @@ public abstract class AbstractSocketChannelServer implements Closeable {
     /**
      *
      * @param selector
-     * @param serverSocket
+     * @param channel
      * @throws IOException
      */
-    private void register(Selector selector, ServerSocketChannel serverSocket) throws IOException {
-        final SocketChannel client = serverSocket.accept();
+    private void accept(Selector selector, C channel) throws IOException {
+        final SocketChannel client = ((ServerSocketChannel)channel).accept();
         final SelectionKeyAttachment attachment = new SelectionKeyAttachment();
         client.configureBlocking(false);
         client.register(selector, SelectionKey.OP_READ, attachment);
@@ -203,56 +201,63 @@ public abstract class AbstractSocketChannelServer implements Closeable {
      */
     protected abstract void processMessage(byte[] messageBytes, SelectionKey key) throws IOException;
 
+    protected void connect( Selector selector, C channel) throws IOException {}
+
     /**
      *
      * @param address
      * @throws IOException
      */
-    public final void bind(InetSocketAddress address) throws IOException  {
+    public final void bind(InetSocketAddress address) throws IOException {
 
         final Selector selector = Selector.open();
-        final ServerSocketChannel serverSocket = ServerSocketChannel.open();
 
-        serverSocket.bind(address);
-        serverSocket.configureBlocking(false);
-        serverSocket.register(selector, SelectionKey.OP_ACCEPT);
+        try (final ServerSocketChannel serverSocket = ServerSocketChannel.open()) {
 
-        enabled = true;
+            serverSocket.bind(address);
+            serverSocket.configureBlocking(false);
+            serverSocket.register(selector, SelectionKey.OP_ACCEPT);
 
-        while (enabled) {
-            final int selectors =  selector.select();
-            log.trace( "selectors selected # {}", selectors);
+            enabled = true;
 
-            if( selectors == 0  ) continue;
+            while (enabled) {
+                final int selectors = selector.select();
+                log.trace("selectors selected # {}", selectors);
 
-            final Set<SelectionKey> selectedKeys = selector.selectedKeys();
-            final Iterator<SelectionKey> keys = selectedKeys.iterator();
-            while (keys.hasNext()) {
+                if (selectors == 0) continue;
 
-                final SelectionKey key = keys.next();
+                final Set<SelectionKey> selectedKeys = selector.selectedKeys();
+                final Iterator<SelectionKey> keys = selectedKeys.iterator();
+                while (keys.hasNext()) {
 
-                if (key.isAcceptable()) {
-                    log.trace( "isAcceptable");
-                    register(selector, serverSocket);
-                }
-                try {
-                    if (key.isReadable()) {
-                        log.trace("isReadable");
-                        readFromChannel(key);
-                    } else if (key.isWritable()) {
-                        log.trace("isWritable");
-                        writeToChannel(key);
+                    final SelectionKey key = keys.next();
+
+                    if (key.isAcceptable()) {
+                        log.trace("isAcceptable");
+                        accept(selector, (C) serverSocket);
                     }
-                }
-                catch( IOException ex ){
-                    log.error( "error reading/writing from/to channel", ex );
-                    final SelectableChannel channel = key.channel();
-                    channel.close();
-                }
+                    if (key.isConnectable()) {
+                        log.trace("isConnectable");
+                        connect(selector, (C) serverSocket);
+                    }
+                    try {
+                        if (key.isReadable()) {
+                            log.trace("isReadable");
+                            readFromChannel(key);
+                        } else if (key.isWritable()) {
+                            log.trace("isWritable");
+                            writeToChannel(key);
+                        }
+                    } catch (IOException ex) {
+                        log.error("error reading/writing from/to channel", ex);
+                        final SelectableChannel channel = key.channel();
+                        channel.close();
+                    }
 
-                keys.remove();
+                    keys.remove();
+                }
             }
-        }
 
+        }
     }
 }

@@ -41,12 +41,15 @@ public class EchoClient implements Closeable {
 
     public static void main(String[] args) throws Exception {
 
-        for( int instance = 0 ; instance < 20 ; ++instance ) {
+        final int INSTANCES = 1;
+        final int MESSAGES = 1;
+
+        for( int instance = 0 ; instance < INSTANCES ; ++instance ) {
             Thread.sleep( 1000 );
             new Thread( () -> {
                 try (final EchoClient echo = new EchoClient()) {
 
-                    for (int i = 0; i < 100; ++i) {
+                    for (int i = 0; i < MESSAGES; ++i) {
                         final String msg = String.format("message(%d) - %d", Thread.currentThread().getId(), i);
                         echo.sendMessage(msg);
                         Thread.sleep( 500 );
