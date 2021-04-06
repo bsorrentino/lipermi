@@ -12,8 +12,8 @@ import java.net.InetSocketAddress;
 import java.net.ServerSocket;
 import java.net.Socket;
 
+import static java.lang.String.format;
 import static java.util.Optional.ofNullable;
-
 
 /**
  * The LipeRMI server.
@@ -34,16 +34,28 @@ public class SocketServer implements IServer {
 
     private boolean enabled;
 
+    /**
+     *
+     * @throws IOException
+     */
     @Override
     public void close() throws IOException {
         enabled = false;
     }
 
+    /**
+     *
+     * @param port
+     * @param callHandler
+     * @param filter
+     * @return
+     * @throws IOException
+     */
     @Override
     public int bind(int port, final CallHandler callHandler, IProtocolFilter filter) throws IOException {
         serverSocket = new ServerSocket();
         serverSocket.setPerformancePreferences(1, 0, 2);
-            enabled = true;
+        enabled = true;
 
         if (port >= 0) {
             serverSocket.bind(new InetSocketAddress(port));
@@ -53,9 +65,9 @@ public class SocketServer implements IServer {
 
         final Thread bindThread = new Thread(() -> {
             while (enabled) {
-                Socket acceptSocket = null;
+
                 try {
-                    acceptSocket = serverSocket.accept();
+                    final Socket acceptSocket  = serverSocket.accept();
 
                     SocketConnectionHandler.start( acceptSocket,
                                             callHandler,
@@ -65,7 +77,7 @@ public class SocketServer implements IServer {
                     log.warn("bindThread error", e);
                 }
             }
-        }, String.format("Bind (%d)", port)); //$NON-NLS-1$ //$NON-NLS-2$
+        }, format("Bind (%d)", port));
         bindThread.start();
 
         return serverSocket.getLocalPort();

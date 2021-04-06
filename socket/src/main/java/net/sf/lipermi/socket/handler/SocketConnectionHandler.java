@@ -19,6 +19,13 @@ public class SocketConnectionHandler extends AbstractConnectionHandler implement
 
   private static final org.slf4j.Logger log = org.slf4j.LoggerFactory.getLogger(SocketConnectionHandler.class);
 
+  /**
+   *
+   * @param socket
+   * @param callHandler
+   * @param filter
+   * @return
+   */
   public static SocketConnectionHandler start(Socket socket, CallHandler callHandler, IProtocolFilter filter) {
     SocketConnectionHandler connectionHandler = new SocketConnectionHandler(socket, callHandler, filter);
 
@@ -30,6 +37,12 @@ public class SocketConnectionHandler extends AbstractConnectionHandler implement
     return connectionHandler;
   }
 
+  /**
+   *
+   * @param socket
+   * @param callHandler
+   * @param filter
+   */
   public SocketConnectionHandler(Socket socket, CallHandler callHandler, IProtocolFilter filter) {
     super(callHandler, filter);
     this.socket = socket;
@@ -38,6 +51,11 @@ public class SocketConnectionHandler extends AbstractConnectionHandler implement
   private final Socket socket;
   private ObjectOutputStream output;
 
+  /**
+   *
+   * @param remoteMessage
+   * @throws IOException
+   */
   @Override
   protected void writeMessage(IRemoteMessage remoteMessage) throws IOException {
 
@@ -53,17 +71,21 @@ public class SocketConnectionHandler extends AbstractConnectionHandler implement
 
   }
 
+  /**
+   *
+   * @return
+   */
   @Override
   protected boolean isConnected() {
     return socket.isConnected();
   }
 
+  /**
+   *
+   */
   @Override
   public void run() {
-    try (
-        final ObjectInputStream input = new ObjectInputStream(socket.getInputStream())
-    )
-    {
+    try (final ObjectInputStream input = new ObjectInputStream(socket.getInputStream())) {
 
       while (socket.isConnected()) {
 
@@ -84,13 +106,16 @@ public class SocketConnectionHandler extends AbstractConnectionHandler implement
       } catch (IOException ex) {
         log.warn("error closing tcpStream: {}", ex.getMessage());
       }
-
       synchronized (remoteReturns) {
         remoteReturns.notifyAll();
       }
     }
   }
 
+  /**
+   *
+   * @throws IOException
+   */
   @Override
   public void close() throws IOException {
     socket.close();
