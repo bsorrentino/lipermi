@@ -34,8 +34,8 @@ public class AsyncSocketEchoServer2 implements Closeable  {
     CompletableFuture<Void> accept(AsynchronousServerSocketChannel serverSock  ) {
 
         return acceptChannel(serverSock)
-                .thenCompose( this::startRead )
-                .thenAccept( r -> accept( serverSock) );
+                .thenAccept( this::startRead )
+                .thenRun( () -> accept( serverSock) );
 
 
     }
@@ -49,8 +49,8 @@ public class AsyncSocketEchoServer2 implements Closeable  {
         final ByteBuffer buf = ByteBuffer.allocate(2 * 1024);
 
         return readFromChannel( channel, buf)
-                .thenCompose( result -> writeToChannel(channel, buf.flip()) )
-                .thenAccept( result -> startRead(channel) )
+                .thenAccept( result -> writeToChannel(channel, buf.flip()) )
+                .thenRun( () -> startRead(channel) )
                 ;
     }
 
