@@ -9,6 +9,8 @@ import java.nio.channels.CompletionHandler;
 import java.nio.charset.StandardCharsets;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.function.Function;
+import java.util.function.Supplier;
 
 import static java.lang.String.format;
 
@@ -25,23 +27,27 @@ public class AsyncSocketEchoClient implements java.io.Closeable {
         //create a socket channel
         sockChannel = AsynchronousSocketChannel.open();
 
+        final Function<String, CompletableFuture<Integer>> sendMessage = ( msg ) ->
+            startWrite(sockChannel, msg, null)
+                    .thenApply(v -> messageWritten.getAndIncrement())
+                    .thenCompose(v ->
+                            startRead(sockChannel, null)
+                                    .thenApply(value -> {
+                                        log.info("message: {}", value);
+                                        return messageRead.getAndIncrement();
+                                    })
+                    )
+                    .exceptionally(ex -> {
+                        log.warn("error reading/writing", ex);
+                        return messageError.getAndIncrement();
+                    });
+
         final CompletableFuture<Void> connectFuture =
 
         connect( sockChannel, new InetSocketAddress(host, port), null).thenCompose( nil ->
             //write an message to server side
-            startWrite( sockChannel, message, null )
-                    .thenApply( v -> messageWritten.getAndIncrement() )
-                    .thenCompose( v ->
-                            startRead( sockChannel, null )
-                                    .thenApply( value  -> {
-                                        log.info( "message: {}", value);
-                                        return messageRead.getAndIncrement();
-                                    })
-                    )
-                    .exceptionally( ex -> {
-                        log.warn( "error reading/writing", ex );
-                        return messageError.getAndIncrement();
-                    })
+            sendMessage.apply(message)
+                    .thenCompose( v -> sendMessage.apply(message.concat( "- 2")))
         ).thenAccept( (nil) -> {
             try {
                 sockChannel.close();
@@ -52,6 +58,8 @@ public class AsyncSocketEchoClient implements java.io.Closeable {
 
         connectFuture.join();
     }
+
+
 
     @Override
     public void close() throws IOException {
