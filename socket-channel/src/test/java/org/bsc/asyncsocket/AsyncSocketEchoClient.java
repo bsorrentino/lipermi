@@ -4,9 +4,15 @@ package org.bsc.asyncsocket;
 import java.io.IOException;
 import java.net.InetSocketAddress;
 import java.nio.ByteBuffer;
+import java.nio.CharBuffer;
 import java.nio.channels.AsynchronousSocketChannel;
 import java.nio.channels.CompletionHandler;
+import java.nio.charset.Charset;
+import java.nio.charset.StandardCharsets;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.atomic.AtomicInteger;
+
+import static java.lang.String.format;
 
 /**
  *
@@ -17,27 +23,36 @@ public class AsyncSocketEchoClient implements java.io.Closeable {
 
     final AsynchronousSocketChannel sockChannel;
 
-    public AsyncSocketEchoClient(String host, int port, final String message, final AtomicInteger messageWritten, final AtomicInteger messageRead ) throws IOException {
+    public AsyncSocketEchoClient(String host, int port, final String message, final AtomicInteger messageWritten, final AtomicInteger messageRead, final AtomicInteger messageError ) throws IOException {
         //create a socket channel
         sockChannel = AsynchronousSocketChannel.open();
-        
-        //try to connect to the server side
-        sockChannel.connect( new InetSocketAddress(host, port), sockChannel, new CompletionHandler<Void, AsynchronousSocketChannel >() {
-            @Override
-            public void completed(Void result, AsynchronousSocketChannel channel ) {
-                //start to read message
-                startRead( channel,messageRead );
-                
-                //write an message to server side
-                startWrite( channel, message, messageWritten );
-            }
 
-            @Override
-            public void failed(Throwable exc, AsynchronousSocketChannel channel) {
-                log.warn( "fail to connect to server", exc);
+        final CompletableFuture<Void> connectFuture =
+
+        connect( sockChannel, new InetSocketAddress(host, port), null).thenCompose( nil ->
+            //write an message to server side
+            startWrite( sockChannel, message, null )
+                    .thenApply( v -> messageWritten.getAndIncrement() )
+                    .thenCompose( v ->
+                            startRead( sockChannel, null )
+                                    .thenApply( value  -> {
+                                        log.info( "message: {}", value);
+                                        return messageRead.getAndIncrement();
+                                    })
+                    )
+                    .exceptionally( ex -> {
+                        log.warn( "error reading/writing", ex );
+                        return messageError.getAndIncrement();
+                    })
+        ).thenAccept( (nil) -> {
+            try {
+                sockChannel.close();
+            } catch (IOException e) {
+                log.warn( "error closing channel", e );
             }
-            
         });
+
+        connectFuture.join();
     }
 
     @Override
@@ -45,58 +60,113 @@ public class AsyncSocketEchoClient implements java.io.Closeable {
         sockChannel.close();
     }
 
-    private void startRead( final AsynchronousSocketChannel sockChannel, final AtomicInteger messageRead ) {
+    private String bufferToString(ByteBuffer buffer, int length ) {
+
+        if(buffer.hasArray()) {
+            return new String(buffer.array(), 0, length, StandardCharsets.UTF_8);
+        }
+
+        byte[] bytes = new byte[length];
+        buffer.get(bytes);
+
+        return new String(bytes, StandardCharsets.UTF_8);
+    }
+
+    private <Attach> CompletableFuture<String> startRead( final AsynchronousSocketChannel sockChannel, Attach attachment) {
         final ByteBuffer buf = ByteBuffer.allocate(2048);
-        
-        sockChannel.read( buf, sockChannel, new CompletionHandler<Integer, AsynchronousSocketChannel>(){
+        final CompletableFuture<String> futureResult = new CompletableFuture<>();
+
+        sockChannel.read( buf, attachment, new CompletionHandler<Integer, Attach>(){
 
             @Override
-            public void completed(Integer result, AsynchronousSocketChannel channel) {   
-                //message is read from server
-                messageRead.getAndIncrement();
-                
-                //print the message
-                log.trace( "Read message: {}",  new String(buf.array()) );
+            public void completed(Integer result, Attach attachment) {
+                futureResult.complete( bufferToString(buf, result) );
             }
 
             @Override
-            public void failed(Throwable exc, AsynchronousSocketChannel channel) {
-                log.warn( "fail to read message from server", exc);
+            public void failed(Throwable exc, Attach attachment) {
+                futureResult.completeExceptionally(exc);
             }
             
         });
+
+        return futureResult;
         
     }
-    private void startWrite( final AsynchronousSocketChannel sockChannel, final String message, final AtomicInteger messageWritten ) {
-        ByteBuffer buf = ByteBuffer.allocate(2048);
+
+    private <Attach> CompletableFuture<Integer> startWrite(final AsynchronousSocketChannel sockChannel, final String message, Attach attachment ) {
+
+        final ByteBuffer buf = ByteBuffer.allocate(2048);
         buf.put(message.getBytes());
         buf.flip();
-        messageWritten.getAndIncrement();
-        sockChannel.write(buf, sockChannel, new CompletionHandler<Integer, AsynchronousSocketChannel >() {
+
+        final CompletableFuture<Integer> futureResult = new CompletableFuture<>();
+
+        sockChannel.write(buf, attachment, new CompletionHandler<Integer, Attach>() {
             @Override
-            public void completed(Integer result, AsynchronousSocketChannel channel ) {
+            public void completed(Integer result, Attach attachment ) {
                 //after message written
                 //NOTHING TO DO
+                futureResult.complete(result);
             }
 
             @Override
-            public void failed(Throwable exc, AsynchronousSocketChannel channel) {
-                log.warn( "Fail to write the message to server", exc);
+            public void failed(Throwable exc, Attach attachment) {
+                futureResult.completeExceptionally(exc);
             }
         });
+
+        return futureResult;
     }
-    
+
+    /**
+     *
+     * @param socketChannel
+     * @param address
+     * @param attachment
+     * @param <Attach>
+     * @return
+     */
+    private <Attach> CompletableFuture<Void> connect(AsynchronousSocketChannel socketChannel, InetSocketAddress address, final Attach attachment ) {
+
+        final CompletableFuture<Void> futureResult = new CompletableFuture<>();
+
+        sockChannel.connect( address, attachment, new CompletionHandler<Void, Attach>() {
+
+            @Override
+            public void completed(Void result, Attach attachment) {
+                futureResult.complete(null);
+            }
+
+            @Override
+            public void failed(Throwable exc, Attach attachment) {
+                futureResult.completeExceptionally(exc);
+            }
+        });
+
+        return futureResult;
+    }
+
     public static void main( String...args ) {
         try {
+
+            int steps = 1000;
             AtomicInteger messageWritten = new AtomicInteger( 0 );
             AtomicInteger messageRead = new AtomicInteger( 0 );
-            
-            for( int i = 0; i < 1000; i++ ) {
-                new AsyncSocketEchoClient( "127.0.0.1", 3575, "echo test", messageWritten, messageRead );
+            AtomicInteger messageError = new AtomicInteger( 0 );
+
+            for( int i = 0; i < steps; i++ ) {
+                new AsyncSocketEchoClient(
+                        "127.0.0.1",
+                        3575,
+                        format("echo test %04d", i ),
+                        messageWritten,
+                        messageRead,
+                        messageError );
 
             }
             
-            while( messageRead.get() != 1000 ) {
+            while( messageRead.get() + messageError.get() < steps ) {
                 Thread.sleep( 1000 );
             }
             log.info( "message write: {}", messageWritten );

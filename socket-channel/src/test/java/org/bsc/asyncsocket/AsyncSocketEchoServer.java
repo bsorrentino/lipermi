@@ -29,7 +29,7 @@ public class AsyncSocketEchoServer implements Closeable {
 
             @Override
             public void completed(AsynchronousSocketChannel sockChannel, AsynchronousServerSocketChannel serverSock) {
-                log.trace( "accept.completed");
+                log.debug( "accept.completed");
                 //a connection is accepted, start to accept next connection
                 serverSock.accept(serverSock, this);
                 //start to read message from the client
@@ -55,6 +55,12 @@ public class AsyncSocketEchoServer implements Closeable {
     }
 
     private void startRead( AsynchronousSocketChannel sockChannel ) {
+
+        if( !sockChannel.isOpen() ) {
+            log.trace( "sockChannel is closed!");
+            return;
+        }
+
         final ByteBuffer buf = ByteBuffer.allocate(2048);
         
         //read message from client
@@ -65,6 +71,16 @@ public class AsyncSocketEchoServer implements Closeable {
              */
             @Override
             public void completed(Integer result, AsynchronousSocketChannel channel  ) {
+
+                if( result == - 1 ) {
+                    try {
+                        channel.close();
+                    } catch (IOException e) {
+                        log.warn( "error closing channel");
+                    }
+                    return;
+                }
+
                 log.trace("read.completed: {} - buf. {remaining:{}} ", result, buf.hasRemaining());
 
                 buf.flip();
@@ -87,9 +103,18 @@ public class AsyncSocketEchoServer implements Closeable {
          sockChannel.write(buf, sockChannel, new CompletionHandler<Integer, AsynchronousSocketChannel >() {
 
              @Override
-             public void completed(Integer result, AsynchronousSocketChannel channel) {                 
+             public void completed(Integer result, AsynchronousSocketChannel channel) {
+                 if( result == - 1 ) {
+                     try {
+                         channel.close();
+                     } catch (IOException e) {
+                         log.warn( "error closing channel");
+                     }
+                     return;
+                 }
+
                  //finish to write message to client, nothing to do
-                 log.trace("write.completed: {} - buf. {remaining:{}} ", result, buf.hasRemaining());
+                 log.trace("write.completed: {} - buf. {remaining:{}} } ", result, buf.hasRemaining());
              }
 
              @Override
@@ -102,7 +127,10 @@ public class AsyncSocketEchoServer implements Closeable {
      }
      
      public static void main( String[] args ) {
-        try( final AsyncSocketEchoServer server = new AsyncSocketEchoServer( "127.0.0.1", 3575 )) {
+
+        log.info( "starting server ....");
+        try( final AsyncSocketEchoServer server = new AsyncSocketEchoServer( "localhost", 3575 )) {
+            log.info( "server started");
             Thread.currentThread().join();
         } catch (Exception ex) {
             log.error( "error in main", ex);
