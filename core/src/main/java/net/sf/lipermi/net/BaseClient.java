@@ -27,6 +27,7 @@ import static java.lang.String.format;
  * @see    net.sf.lipermi.handler.CallHandler
  */
 public class BaseClient implements Closeable {
+    private static final org.slf4j.Logger log = org.slf4j.LoggerFactory.getLogger(BaseClient.class);
 
     private final TCPFullDuplexStream TCPStream;
 
@@ -65,10 +66,12 @@ public class BaseClient implements Closeable {
      * @return
      */
     public <T> T getGlobal(Class<T> clazz) {
-        return CallHandler.getInterface( clazz ).map( ifc ->
-                    (T)Proxy.newProxyInstance(clazz.getClassLoader(),
+        return CallHandler.getInterface( clazz ).map( ifc -> {
+                   log.trace( "getGlobal({})={}", clazz, ifc);
+                   return  (T)Proxy.newProxyInstance(clazz.getClassLoader(),
                                 new Class[] { ifc },
-                                new CallProxy(connectionHandler)) )
+                                new CallProxy(connectionHandler));
+                })
                 .orElseThrow( () -> new IllegalArgumentException(format("class %s is not a valid interface", clazz)));
     }
 
