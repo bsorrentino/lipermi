@@ -21,7 +21,6 @@
         <snapshot.repo.url>https://oss.sonatype.org/content/repositories/snapshots/</snapshot.repo.url>
       </properties>
 
-
       <repositories>
 
         <repository>
