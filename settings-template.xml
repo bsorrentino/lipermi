@@ -1,5 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<settings xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/settings-1.1.0.xsd">
+<settings xmlns="http://maven.apache.org/POM/4.0.0"
+          xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/settings-1.1.0.xsd">
   <servers>
 
     <server>
@@ -21,7 +23,7 @@
     <profile>
       <id>github</id>
       <properties>
-        <release.repo.id>github</release.repo.id>
+        <release.repo.id>github-server</release.repo.id>
         <release.repo.url>https://maven.pkg.github.com/bsorrentino/lipermi</release.repo.url>
         <snapshot.repo.id>sonatype-server</snapshot.repo.id>
         <snapshot.repo.url>https://oss.sonatype.org/content/repositories/snapshots/</snapshot.repo.url>
@@ -30,7 +32,7 @@
       <repositories>
 
         <repository>
-          <id>github-server</id>
+          <id>${release.repo.id}</id>
           <name>github</name>
           <url>${release.repo.url}</url>
           <snapshots><enabled>false</enabled></snapshots>
