@@ -16,9 +16,8 @@ public class RemoteInstance implements Serializable {
 
     private static final long serialVersionUID = -4597780264243542810L;
 
-    String instanceId;
-
-    String className;
+    final String instanceId;
+    final String className;
 
     public String getClassName() {
         return className;
