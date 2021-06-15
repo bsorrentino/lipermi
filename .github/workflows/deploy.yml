@@ -14,7 +14,7 @@ jobs:
       - uses: actions/setup-java@v2
         with:
           java-version: '8'
-          distribution: 'bsorrentino'
+          distribution: 'adopt'
       - name: Publish package
         run: mvn -B deploy --file pom.xml -s settings-template.xml -P github
         env:
