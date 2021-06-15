@@ -82,7 +82,7 @@
     <distributionManagement>
         <repository>
             <id>${release.repo.id}</id>
-            <name>central</name>
+            <name>release</name>
             <url>${release.repo.url}</url>
         </repository>
         <snapshotRepository>

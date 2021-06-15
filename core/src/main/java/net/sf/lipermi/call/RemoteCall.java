@@ -13,22 +13,22 @@ public class RemoteCall implements IRemoteMessage {
     /**
      * Instance will receive the call
      */
-    RemoteInstance remoteInstance;
+    final RemoteInstance remoteInstance;
 
     /**
      * Method's name
      */
-    String methodId;
+    final String methodId;
 
     /**
      * Method's argument
      */
-    Object[] args;
+    final Object[] args;
 
     /**
      * The id is a number unique in client and server to identify the call
      */
-    Long callId;
+    final Long callId;
 
     public Object[] getArgs() {
         return args;

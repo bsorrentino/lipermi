@@ -1,5 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<settings xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/settings-1.1.0.xsd">
+<settings xmlns="http://maven.apache.org/POM/4.0.0"
+          xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/settings-1.1.0.xsd">
   <servers>
 
     <server>
@@ -8,15 +10,42 @@
       <password>${env.OSS_SONATYPE_PASSWORD}</password>
     </server>
 
+    <server>
+      <id>github-server</id>
+      <username>bsorrentino</username>
+      <password>${env.GITHUB_TOKEN}</password>
+    </server>
+
   </servers>
 
   <profiles>
 
     <profile>
+      <id>github</id>
+      <properties>
+        <release.repo.id>github-server</release.repo.id>
+        <release.repo.url>https://maven.pkg.github.com/bsorrentino/lipermi</release.repo.url>
+        <snapshot.repo.id>sonatype-server</snapshot.repo.id>
+        <snapshot.repo.url>https://oss.sonatype.org/content/repositories/snapshots/</snapshot.repo.url>
+      </properties>
+
+      <repositories>
+
+        <repository>
+          <id>${release.repo.id}</id>
+          <name>github</name>
+          <url>${release.repo.url}</url>
+          <snapshots><enabled>false</enabled></snapshots>
+          <releases><enabled>true</enabled></releases>
+        </repository>
+
+      </repositories>
+
+    </profile>
+
+    <profile>
       <id>sonatype</id>
-      <activation>
-        <activeByDefault>true</activeByDefault>
-      </activation>
+      <!-- activation><activeByDefault>true</activeByDefault></activation -->
       <properties>
         <snapshot.repo.id>sonatype-server</snapshot.repo.id>
         <snapshot.repo.url>https://oss.sonatype.org/content/repositories/snapshots/</snapshot.repo.url>
@@ -32,12 +61,8 @@
           <id>sonatype-server</id>
           <name>sonatype snapshots</name>
           <url>${snapshot.repo.url}</url>
-          <snapshots>
-            <enabled>true</enabled>
-          </snapshots>
-          <releases>
-            <enabled>false</enabled>
-          </releases>
+          <snapshots><enabled>true</enabled></snapshots>
+          <releases><enabled>false</enabled></releases>
         </repository>
 
       </repositories>
