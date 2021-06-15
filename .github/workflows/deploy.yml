@@ -16,6 +16,6 @@ jobs:
           java-version: '8'
           distribution: 'adopt'
       - name: Publish package
-        run: mvn -P github -B deploy --file pom.xml -s settings-template.xml
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: mvn -P github -B deploy --file pom.xml -s settings-template.xml
