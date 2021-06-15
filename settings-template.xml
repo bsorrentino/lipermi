@@ -13,10 +13,18 @@
   <profiles>
 
     <profile>
+      <id>github</id>
+      <properties>
+        <release.repo.id>github</release.repo.id>
+        <release.repo.url>https://maven.pkg.github.com/bsorrentino/lipermi</release.repo.url>
+        <snapshot.repo.id>sonatype-server</snapshot.repo.id>
+        <snapshot.repo.url>https://oss.sonatype.org/content/repositories/snapshots/</snapshot.repo.url>
+      </properties>
+    </profile>
+
+    <profile>
       <id>sonatype</id>
-      <activation>
-        <activeByDefault>true</activeByDefault>
-      </activation>
+      <activation><activeByDefault>true</activeByDefault></activation>
       <properties>
         <snapshot.repo.id>sonatype-server</snapshot.repo.id>
         <snapshot.repo.url>https://oss.sonatype.org/content/repositories/snapshots/</snapshot.repo.url>
@@ -32,12 +40,8 @@
           <id>sonatype-server</id>
           <name>sonatype snapshots</name>
           <url>${snapshot.repo.url}</url>
-          <snapshots>
-            <enabled>true</enabled>
-          </snapshots>
-          <releases>
-            <enabled>false</enabled>
-          </releases>
+          <snapshots><enabled>true</enabled></snapshots>
+          <releases><enabled>false</enabled></releases>
         </repository>
 
       </repositories>
