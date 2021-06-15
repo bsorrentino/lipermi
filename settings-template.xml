@@ -8,6 +8,12 @@
       <password>${env.OSS_SONATYPE_PASSWORD}</password>
     </server>
 
+    <server>
+      <id>github-server</id>
+      <username>bsorrentino</username>
+      <password>${env.secrets.GITHUB_TOKEN}</password>
+    </server>
+
   </servers>
 
   <profiles>
@@ -37,7 +43,7 @@
 
     <profile>
       <id>sonatype</id>
-      <activation><activeByDefault>true</activeByDefault></activation>
+      <!-- activation><activeByDefault>true</activeByDefault></activation -->
       <properties>
         <snapshot.repo.id>sonatype-server</snapshot.repo.id>
         <snapshot.repo.url>https://oss.sonatype.org/content/repositories/snapshots/</snapshot.repo.url>
