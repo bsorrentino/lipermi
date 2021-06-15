@@ -20,6 +20,20 @@
         <snapshot.repo.id>sonatype-server</snapshot.repo.id>
         <snapshot.repo.url>https://oss.sonatype.org/content/repositories/snapshots/</snapshot.repo.url>
       </properties>
+
+
+      <repositories>
+
+        <repository>
+          <id>github-server</id>
+          <name>github</name>
+          <url>${release.repo.url}</url>
+          <snapshots><enabled>false</enabled></snapshots>
+          <releases><enabled>true</enabled></releases>
+        </repository>
+
+      </repositories>
+
     </profile>
 
     <profile>
