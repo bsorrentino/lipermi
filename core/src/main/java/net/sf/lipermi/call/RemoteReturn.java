@@ -13,17 +13,17 @@ public class RemoteReturn implements IRemoteMessage {
     /**
      * The return is a throwable to be thrown?
      */
-    boolean throwing;
+    final boolean throwing;
 
     /**
      * Returning object
      */
-    Object ret;
+    final Object ret;
 
     /**
      * Call id which generated this return
      */
-    long callId;
+    final long callId;
 
     public Long getCallId() {
         return callId;
