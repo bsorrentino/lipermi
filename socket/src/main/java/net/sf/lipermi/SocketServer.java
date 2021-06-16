@@ -36,8 +36,6 @@ public class SocketServer implements IServer {
     private ServerSocket serverSocket;
     private boolean enabled;
 
-    final ExecutorService threadPool =  Executors.newCachedThreadPool( ConnectionHandler.threadFactory );
-
     @Override
     public void close() throws IOException {
         enabled = false;
@@ -66,14 +64,7 @@ public class SocketServer implements IServer {
                     final FullDuplexSocketStreamAdapter socketAdapter =
                             new FullDuplexSocketStreamAdapter(acceptSocket);
 
-                    threadPool.execute(
-                            ConnectionHandler.of(   socketAdapter,
-                                                    callHandler,
-                                                    _filter));
-
-//                    ConnectionHandler.start(   socketAdapter,
-//                                            callHandler,
-//                                            ofNullable(filter).orElseGet(DefaultFilter::new));
+                    ConnectionHandler.start( socketAdapter, callHandler, _filter );
 
                 } catch (IOException e) {
                     log.warn("bindThread error", e);
