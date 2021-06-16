@@ -5,6 +5,7 @@ import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.lang.reflect.Method;
 import java.util.*;
+import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.atomic.AtomicLong;
 
 import net.sf.lipermi.TCPFullDuplexStream;
@@ -35,6 +36,13 @@ import static java.util.Optional.empty;
  */
 public class ConnectionHandler implements Runnable {
     private static final org.slf4j.Logger log = org.slf4j.LoggerFactory.getLogger(ConnectionHandler.class);
+
+    public static final ThreadFactory threadFactory = runnable ->
+            (new Thread("ConnectionHandler"));
+
+    public static final ConnectionHandler of( TCPFullDuplexStream socket, CallHandler callHandler, IProtocolFilter filter ) {
+        return new ConnectionHandler(socket, callHandler, filter);
+    }
 
     public static ConnectionHandler start(TCPFullDuplexStream socket, CallHandler callHandler, IProtocolFilter filter) {
         ConnectionHandler connectionHandler = new ConnectionHandler(socket, callHandler, filter);

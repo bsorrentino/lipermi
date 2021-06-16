@@ -4,6 +4,9 @@ import java.io.IOException;
 import java.net.InetSocketAddress;
 import java.net.ServerSocket;
 import java.net.Socket;
+import java.util.concurrent.Executor;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
 import net.sf.lipermi.handler.CallHandler;
 import net.sf.lipermi.handler.ConnectionHandler;
@@ -25,14 +28,15 @@ import static java.util.Optional.ofNullable;
  * @date   05/10/2006
  *
  * @see    net.sf.lipermi.handler.CallHandler
- * @see    BaseClient
+ * @see    IServer
  */
 public class SocketServer implements IServer {
     private static final org.slf4j.Logger log = org.slf4j.LoggerFactory.getLogger(SocketServer.class);
 
     private ServerSocket serverSocket;
-
     private boolean enabled;
+
+    final ExecutorService threadPool =  Executors.newCachedThreadPool( ConnectionHandler.threadFactory );
 
     @Override
     public void close() throws IOException {
@@ -51,6 +55,8 @@ public class SocketServer implements IServer {
             serverSocket.bind(null);
         }
 
+        final IProtocolFilter _filter = ofNullable(filter).orElseGet(DefaultFilter::new);
+
         final Thread bindThread = new Thread(() -> {
             while (enabled) {
                 Socket acceptSocket = null;
@@ -60,15 +66,20 @@ public class SocketServer implements IServer {
                     final FullDuplexSocketStreamAdapter socketAdapter =
                             new FullDuplexSocketStreamAdapter(acceptSocket);
 
-                    ConnectionHandler.start(   socketAdapter,
-                                            callHandler,
-                                            ofNullable(filter).orElseGet(DefaultFilter::new));
+                    threadPool.execute(
+                            ConnectionHandler.of(   socketAdapter,
+                                                    callHandler,
+                                                    _filter));
+
+//                    ConnectionHandler.start(   socketAdapter,
+//                                            callHandler,
+//                                            ofNullable(filter).orElseGet(DefaultFilter::new));
 
                 } catch (IOException e) {
                     log.warn("bindThread error", e);
                 }
             }
-        }, String.format("Bind (%d)", port)); //$NON-NLS-1$ //$NON-NLS-2$
+        }, String.format("Bind (%d)", port));
         bindThread.start();
 
         return serverSocket.getLocalPort();

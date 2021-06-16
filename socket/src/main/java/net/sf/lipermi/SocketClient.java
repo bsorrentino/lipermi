@@ -18,7 +18,7 @@ import java.net.Socket;
  * @date   05/10/2006
  *
  * @see    net.sf.lipermi.handler.CallHandler
- * @see    TCPSocketServer
+ * @see    BaseClient
  */
 public class SocketClient extends BaseClient {
 
