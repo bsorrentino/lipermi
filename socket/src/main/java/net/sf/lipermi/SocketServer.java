@@ -1,19 +1,17 @@
 package net.sf.lipermi;
 
-import java.io.IOException;
-import java.net.InetSocketAddress;
-import java.net.ServerSocket;
-import java.net.Socket;
-import java.util.concurrent.Executor;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
-
 import net.sf.lipermi.handler.CallHandler;
 import net.sf.lipermi.handler.ConnectionHandler;
 import net.sf.lipermi.handler.filter.DefaultFilter;
 import net.sf.lipermi.handler.filter.IProtocolFilter;
-import net.sf.lipermi.net.BaseClient;
 import net.sf.lipermi.net.IServer;
+
+import java.io.IOException;
+import java.net.InetSocketAddress;
+import java.net.ServerSocket;
+import java.net.Socket;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
 import static java.util.Optional.ofNullable;
 
@@ -36,9 +34,12 @@ public class SocketServer implements IServer {
     private ServerSocket serverSocket;
     private boolean enabled;
 
+    private ExecutorService threadPool = Executors.newCachedThreadPool( ConnectionHandler.threadFactory );
+
     @Override
     public void close() throws IOException {
         enabled = false;
+        threadPool.shutdown();
     }
 
     @Override
@@ -57,14 +58,15 @@ public class SocketServer implements IServer {
 
         final Thread bindThread = new Thread(() -> {
             while (enabled) {
-                Socket acceptSocket = null;
+
                 try {
-                    acceptSocket = serverSocket.accept();
+                    final Socket acceptSocket = serverSocket.accept();
 
                     final FullDuplexSocketStreamAdapter socketAdapter =
                             new FullDuplexSocketStreamAdapter(acceptSocket);
 
-                    ConnectionHandler.start( socketAdapter, callHandler, _filter );
+                    threadPool.execute( ConnectionHandler.of( socketAdapter, callHandler, _filter ) );
+                    // ConnectionHandler.start( socketAdapter, callHandler, _filter );
 
                 } catch (IOException e) {
                     log.warn("bindThread error", e);
