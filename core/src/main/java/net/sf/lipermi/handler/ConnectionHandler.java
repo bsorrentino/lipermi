@@ -14,6 +14,7 @@ import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.lang.reflect.Method;
 import java.util.*;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicLong;
@@ -113,8 +114,7 @@ public class ConnectionHandler implements Runnable {
             }
         });
 
-        final Thread delegator = new Thread(() -> {
-            CallLookup.handlingMe(ConnectionHandler.this);
+        CompletableFuture.runAsync( () -> {
             try {
 
                 log.trace("remoteCall: {} - {}", remoteCall.getCallId(), remoteCall.getRemoteInstance().getInstanceId());
@@ -126,22 +126,14 @@ public class ConnectionHandler implements Runnable {
             } catch (Exception e) {
                 log.error("remoteCall error", e);
             }
-
-            CallLookup.forgetMe();
-        }, "Delegator");
-        delegator.setDaemon(true);
-        delegator.start();
-
+          });
     }
 
 
     @Override
     public void run() {
-        try (
-                final ObjectInputStream input = new ObjectInputStream(tcpStream.getInputStream())
-        )
+        try ( final ObjectInputStream input = new ObjectInputStream(tcpStream.getInputStream() ))
         {
-
             while (tcpStream.isConnected()) {
 
                 final Object objFromStream = input.readUnshared();
