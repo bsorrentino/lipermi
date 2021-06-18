@@ -1,12 +1,5 @@
 package net.sf.lipermi.handler;
 
-import java.io.IOException;
-import java.io.ObjectInputStream;
-import java.io.ObjectOutputStream;
-import java.lang.reflect.Method;
-import java.util.*;
-import java.util.concurrent.atomic.AtomicLong;
-
 import net.sf.lipermi.TCPFullDuplexStream;
 import net.sf.lipermi.call.IRemoteMessage;
 import net.sf.lipermi.call.RemoteCall;
@@ -14,10 +7,23 @@ import net.sf.lipermi.call.RemoteInstance;
 import net.sf.lipermi.call.RemoteReturn;
 import net.sf.lipermi.exception.LipeRMIException;
 import net.sf.lipermi.handler.filter.IProtocolFilter;
-import net.sf.lipermi.net.BaseClient;
+import net.sf.lipermi.net.IClient;
+
+import java.io.IOException;
+import java.io.ObjectInputStream;
+import java.io.ObjectOutputStream;
+import java.lang.reflect.Method;
+import java.util.*;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ThreadFactory;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicLong;
+import java.util.concurrent.locks.Condition;
+import java.util.concurrent.locks.ReentrantLock;
 
 import static java.lang.String.format;
 import static java.util.Optional.empty;
+import static java.util.Optional.ofNullable;
 
 
 /**
@@ -30,16 +36,23 @@ import static java.util.Optional.empty;
  * @see net.sf.lipermi.call.RemoteInstance
  * @see net.sf.lipermi.call.RemoteCall
  * @see net.sf.lipermi.call.RemoteReturn
- * @see BaseClient
+ * @see IClient
  * @see net.sf.lipermi.handler.filter.DefaultFilter
  */
 public class ConnectionHandler implements Runnable {
     private static final org.slf4j.Logger log = org.slf4j.LoggerFactory.getLogger(ConnectionHandler.class);
 
-    public static ConnectionHandler start(TCPFullDuplexStream socket, CallHandler callHandler, IProtocolFilter filter) {
-        ConnectionHandler connectionHandler = new ConnectionHandler(socket, callHandler, filter);
+    public static final ThreadFactory threadFactory = runnable ->
+            (new Thread(runnable, "ConnectionHandler"));
 
-        String threadName = format("ConnectionHandler (%s:%d)", socket.getInetAddress().getHostAddress(), socket.getPort());
+    public static final ConnectionHandler of( TCPFullDuplexStream socket, CallHandler callHandler, IProtocolFilter filter ) {
+        return new ConnectionHandler(socket, callHandler, filter);
+    }
+
+    public static ConnectionHandler start(TCPFullDuplexStream socket, CallHandler callHandler, IProtocolFilter filter) {
+        final ConnectionHandler connectionHandler = of(socket, callHandler, filter);
+
+        final String threadName = format("ConnectionHandler (%s:%d)", socket.getInetAddress().getHostAddress(), socket.getPort());
         Thread connectionHandlerThread = new Thread(connectionHandler, threadName);
         connectionHandlerThread.setDaemon(true);
         connectionHandlerThread.start();
@@ -61,19 +74,66 @@ public class ConnectionHandler implements Runnable {
 
     private final List<RemoteReturn> remoteReturns = new LinkedList<>();
 
+    private final ReentrantLock _lock = new ReentrantLock();
+    private final Condition _remoteReturns = _lock.newCondition();
+
     private ConnectionHandler(TCPFullDuplexStream socket, CallHandler callHandler, IProtocolFilter filter) {
         this.callHandler = callHandler;
         this.tcpStream = socket;
         this.filter = filter;
     }
 
+    private void process( RemoteReturn remoteReturn ) {
+
+        _lock.lock();
+        try {
+            remoteReturns.add(remoteReturn);
+            _remoteReturns.signalAll();
+        }
+        finally {
+            _lock.unlock();
+        }
+
+    }
+
+    /**
+     *
+     * @param remoteCall
+     */
+    private void process( RemoteCall remoteCall ) {
+
+        ofNullable(remoteCall.getArgs()).ifPresent( args -> {
+
+            for (int n = 0; n < args.length; n++) {
+                final Object arg = args[n];
+
+                if (arg instanceof RemoteInstance) {
+                    RemoteInstance remoteInstance = (RemoteInstance) arg;
+                    args[n] = getProxyFromRemoteInstance(remoteInstance);
+                }
+            }
+        });
+
+        CompletableFuture.runAsync( () -> {
+            try {
+
+                log.trace("remoteCall: {} - {}", remoteCall.getCallId(), remoteCall.getRemoteInstance().getInstanceId());
+                final RemoteReturn remoteReturn = callHandler.delegateCall(remoteCall);
+
+                log.trace("remote return {} = {}", remoteCall.getCallId(), remoteReturn.getRet());
+                sendMessage(remoteReturn);
+
+            } catch (Exception e) {
+                log.error("remoteCall error", e);
+            }
+          });
+    }
+
+
     @Override
     public void run() {
-        try (
-                final ObjectInputStream input = new ObjectInputStream(tcpStream.getInputStream())
-        )
+        try ( final ObjectInputStream input = new ObjectInputStream(tcpStream.getInputStream() ))
         {
-
             while (tcpStream.isConnected()) {
 
                 final Object objFromStream = input.readUnshared();
@@ -82,51 +142,23 @@ public class ConnectionHandler implements Runnable {
 
                 if (remoteMessage instanceof RemoteCall) {
 
-                    final RemoteCall remoteCall = (RemoteCall) remoteMessage;
-                    if (remoteCall.getArgs() != null) {
-                        for (int n = 0; n < remoteCall.getArgs().length; n++) {
-                            Object arg = remoteCall.getArgs()[n];
-                            if (arg instanceof RemoteInstance) {
-                                RemoteInstance remoteInstance = (RemoteInstance) arg;
-                                remoteCall.getArgs()[n] = getProxyFromRemoteInstance(remoteInstance);
-                            }
-                        }
-                    }
+                    process( (RemoteCall)remoteMessage );
 
-                    final Thread delegator = new Thread(() -> {
-                        CallLookup.handlingMe(ConnectionHandler.this);
-
-                        try {
-
-                            log.trace("remoteCall: {} - {}", remoteCall.getCallId(), remoteCall.getRemoteInstance().getInstanceId());
-                            final RemoteReturn remoteReturn = callHandler.delegateCall(remoteCall);
-
-                            log.trace("remote return {} = {}", remoteCall.getCallId(), remoteReturn.getRet());
-                            sendMessage(remoteReturn);
-
-                        } catch (Exception e) {
-                            log.error("remoteCall error", e);
-                        }
-
-                        CallLookup.forgetMe();
-                    }, "Delegator");
-                    delegator.setDaemon(true);
-                    delegator.start();
                 } else if (remoteMessage instanceof RemoteReturn) {
-                    RemoteReturn remoteReturn = (RemoteReturn) remoteMessage;
-                    synchronized (remoteReturns) {
-                        remoteReturns.add(remoteReturn);
-                        remoteReturns.notifyAll();
-                    }
+
+                    process( (RemoteReturn) remoteMessage);
+
                 } else
                     throw new LipeRMIException("Unknown IRemoteMessage type");
 
             }
+
         }
         catch( java.io.EOFException eof ) {
             log.warn("ConnectionHandler EOFException!");
         }
         catch (Exception e) {
+
             try {
                 log.error("ConnectionHandler exception. Closing tcpStream!", e);
                 tcpStream.close();
@@ -134,8 +166,12 @@ public class ConnectionHandler implements Runnable {
                 log.warn("error closing tcpStream: {}", ex.getMessage());
             }
 
-            synchronized (remoteReturns) {
-                remoteReturns.notifyAll();
+            _lock.lock();
+            try {
+                _remoteReturns.signalAll();
+            }
+            finally {
+                _lock.unlock();
             }
         }
     }
@@ -177,7 +213,8 @@ public class ConnectionHandler implements Runnable {
 
         boolean bReturned = false;
         do {
-            synchronized (remoteReturns) {
+            _lock.lock();
+           try {
                 for (RemoteReturn ret : remoteReturns) {
                     if (ret.getCallId().equals(id)) {
                         bReturned = true;
@@ -185,19 +222,22 @@ public class ConnectionHandler implements Runnable {
                         break;
                     }
                 }
-                if (bReturned)
+                if (bReturned) {
                     remoteReturns.remove(remoteReturn);
+                }
                 else {
-                    try {
-                        log.trace( "wait for remote return");
-                        remoteReturns.wait( );
-                        log.trace( "got remote return");
-                    } catch (InterruptedException ie) {
-                        log.warn("wait for remote return iterrupted!");
-                        break;
-                    }
+                    log.trace( "wait for remote return");
+                    _remoteReturns.await(10, TimeUnit.SECONDS);
+                    log.trace( "got remote return");
                 }
             }
+            catch( InterruptedException ex ) {
+                log.warn("wait for remote return iterrupted!");
+                break;
+            }
+            finally {
+               _lock.unlock();
+           }
         }
         while (tcpStream.isConnected() && !bReturned);
 

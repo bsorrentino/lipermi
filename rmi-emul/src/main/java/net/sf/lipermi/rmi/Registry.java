@@ -2,11 +2,11 @@ package net.sf.lipermi.rmi;
 
 public interface Registry {
 
-  void bind(Class<?> ifc, Object obj) throws Exception;
+  <T, C extends T> void bind(Class<T> ifc, C obj) throws Exception;
 
   <T> T lookup(Class<T> ifc) throws Exception;
 
-  default void rebind( Class<?> ifc, Object obj ) throws Exception {
+  default <T, C extends T> void rebind( Class<T> ifc, C obj ) throws Exception {
     bind( ifc, obj );
   }
 

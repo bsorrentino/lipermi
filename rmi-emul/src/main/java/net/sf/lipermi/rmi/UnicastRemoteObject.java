@@ -1,6 +1,6 @@
 package net.sf.lipermi.rmi;
 
-import net.sf.lipermi.exception.LipeRMIException;
+
 import net.sf.lipermi.handler.CallHandler;
 
 import java.util.Optional;
@@ -15,7 +15,7 @@ public class UnicastRemoteObject {
    *
    * @param cInterface
    * @param objImplementation
-   * @throws LipeRMIException
+   * @throws Exception
    */
   protected static void registerGlobal(Class cInterface, Object objImplementation) throws Exception {
     callHandler.registerGlobal(cInterface,objImplementation);
