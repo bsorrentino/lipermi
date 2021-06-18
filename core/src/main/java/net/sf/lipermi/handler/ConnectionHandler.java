@@ -1,5 +1,14 @@
 package net.sf.lipermi.handler;
 
+import net.sf.lipermi.TCPFullDuplexStream;
+import net.sf.lipermi.call.IRemoteMessage;
+import net.sf.lipermi.call.RemoteCall;
+import net.sf.lipermi.call.RemoteInstance;
+import net.sf.lipermi.call.RemoteReturn;
+import net.sf.lipermi.exception.LipeRMIException;
+import net.sf.lipermi.handler.filter.IProtocolFilter;
+import net.sf.lipermi.net.IClient;
+
 import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
@@ -10,15 +19,6 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.locks.Condition;
 import java.util.concurrent.locks.ReentrantLock;
-
-import net.sf.lipermi.TCPFullDuplexStream;
-import net.sf.lipermi.call.IRemoteMessage;
-import net.sf.lipermi.call.RemoteCall;
-import net.sf.lipermi.call.RemoteInstance;
-import net.sf.lipermi.call.RemoteReturn;
-import net.sf.lipermi.exception.LipeRMIException;
-import net.sf.lipermi.handler.filter.IProtocolFilter;
-import net.sf.lipermi.net.BaseClient;
 
 import static java.lang.String.format;
 import static java.util.Optional.empty;
@@ -35,7 +35,7 @@ import static java.util.Optional.ofNullable;
  * @see net.sf.lipermi.call.RemoteInstance
  * @see net.sf.lipermi.call.RemoteCall
  * @see net.sf.lipermi.call.RemoteReturn
- * @see BaseClient
+ * @see IClient
  * @see net.sf.lipermi.handler.filter.DefaultFilter
  */
 public class ConnectionHandler implements Runnable {

@@ -2,10 +2,9 @@ package net.sf.lipermi.rmi;
 
 import net.sf.lipermi.handler.CallHandler;
 import net.sf.lipermi.handler.filter.IProtocolFilter;
-import net.sf.lipermi.net.BaseClient;
+import net.sf.lipermi.net.IClient;
 import net.sf.lipermi.net.IServer;
 
-import java.io.IOException;
 import java.util.Optional;
 
 import static java.lang.String.format;
@@ -15,7 +14,7 @@ public abstract class AbstractRegistry implements Registry {
 
     private static final org.slf4j.Logger log = org.slf4j.LoggerFactory.getLogger(AbstractRegistry.class);
 
-    private BaseClient _client = null;
+    private IClient _client = null;
     private IServer _server = null;
 
     private String _host = null;
@@ -28,7 +27,7 @@ public abstract class AbstractRegistry implements Registry {
 
     protected abstract <S extends IServer> S newServer() throws Exception;
 
-    protected abstract <C extends BaseClient> C newClient(String host, int port, CallHandler callHandler, IProtocolFilter filter) throws Exception;
+    protected abstract <C extends IClient> C newClient(String host, int port, CallHandler callHandler, IProtocolFilter filter) throws Exception;
 
     Optional<String> getHost() {
         return ofNullable(_host);
